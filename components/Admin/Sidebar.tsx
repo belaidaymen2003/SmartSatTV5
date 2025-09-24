@@ -2,10 +2,14 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Home, Grid, Users, MessageCircle, Star, Settings, ArrowLeft } from 'lucide-react'
+import { Home, Grid, Users, MessageCircle, Star, Settings, ArrowLeft, LogOut } from 'lucide-react'
 import logo from '../../public/Logo2.png'
 
 export default function Sidebar() {
+  const logout = async () => {
+    await fetch('/api/admin/logout', { method: 'POST' })
+    window.location.href = '/admin/login'
+  }
   return (
     <aside className="w-72 min-h-screen bg-black/30 backdrop-blur-sm text-white border-r border-white/10 fixed left-0 top-0">
       <div className="px-6 py-8 flex items-center gap-3">
@@ -52,11 +56,15 @@ export default function Sidebar() {
           </Link>
         </nav>
 
-        <div className="mt-6 border-t border-white/6 pt-4">
+        <div className="mt-6 border-t border-white/6 pt-4 space-y-1">
           <Link href="/" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/10 transition-colors">
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm">BACK TO HOTFLIX</span>
           </Link>
+          <button onClick={logout} className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/10 transition-colors">
+            <LogOut className="w-4 h-4" />
+            <span className="text-sm">LOG OUT</span>
+          </button>
         </div>
       </div>
     </aside>
