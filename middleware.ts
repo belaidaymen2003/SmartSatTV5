@@ -4,12 +4,9 @@ import type { NextRequest } from 'next/server'
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
   if (!pathname.startsWith('/admin')) return NextResponse.next()
-  if (pathname === '/admin/login') return NextResponse.next()
-  const has = req.cookies.get('admin_session')?.value
-  if (!has) {
+  if (pathname === '/admin/login') {
     const url = req.nextUrl.clone()
-    url.pathname = '/admin/login'
-    url.searchParams.set('redirect', pathname)
+    url.pathname = '/admin'
     return NextResponse.redirect(url)
   }
   return NextResponse.next()
