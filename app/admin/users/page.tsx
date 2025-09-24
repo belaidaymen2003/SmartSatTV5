@@ -1,44 +1,9 @@
 "use client"
 
-import { useMemo, useState } from 'react'
-import { Search, Calendar, Eye, Edit2, Trash2, User, UserPlus, ShieldCheck, Ban, Coins, Plus, Pencil } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Search, Calendar, Eye, Edit2, Trash2, User, UserPlus, ShieldCheck, Ban, Coins, Plus, Pencil, X } from 'lucide-react'
 import Pagination from '../../../components/Admin/Pagination'
-
-interface AdminUser {
-  id: number
-  name: string
-  email: string
-  username: string
-  plan: 'Free' | 'Basic' | 'Premium' | 'Cinematic'
-  comments: number
-  reviews: number
-  credits: number
-  status: 'Approved' | 'Banned'
-  createdAt: string // ISO date
-}
-
-const seed: AdminUser[] = [
-  { id: 11, name: 'Tess Harper', email: 'tess@example.com', username: 'tessharper', plan: 'Premium', comments: 13, reviews: 1, credits: 120, status: 'Approved', createdAt: '2023-02-05' },
-  { id: 12, name: 'Gene Graham', email: 'gene@example.com', username: 'gene', plan: 'Free', comments: 1, reviews: 15, credits: 0, status: 'Approved', createdAt: '2023-02-05' },
-  { id: 13, name: 'Rosa Lee', email: 'rosa@example.com', username: 'rosalee', plan: 'Premium', comments: 6, reviews: 6, credits: 45, status: 'Approved', createdAt: '2023-02-04' },
-  { id: 14, name: 'Matt Jones', email: 'matt@example.com', username: 'mattj', plan: 'Free', comments: 11, reviews: 15, credits: 5, status: 'Banned', createdAt: '2023-02-04' },
-  { id: 15, name: 'Brian Cranston', email: 'brian@example.com', username: 'bcranston', plan: 'Basic', comments: 0, reviews: 0, credits: 300, status: 'Approved', createdAt: '2023-02-04' },
-  { id: 16, name: 'Louis Leterrier', email: 'louis@example.com', username: 'louis', plan: 'Free', comments: 2, reviews: 1, credits: 8, status: 'Approved', createdAt: '2023-02-03' },
-  { id: 17, name: 'Son Gun', email: 'songun@example.com', username: 'songun', plan: 'Cinematic', comments: 65, reviews: 0, credits: 1000, status: 'Approved', createdAt: '2023-02-02' },
-  { id: 18, name: 'Jordana Brewster', email: 'jordana@example.com', username: 'jordana', plan: 'Premium', comments: 0, reviews: 0, credits: 0, status: 'Banned', createdAt: '2023-02-02' },
-  { id: 19, name: 'Tyreese Gibson', email: 'tyreese@example.com', username: 'tyreese', plan: 'Premium', comments: 13, reviews: 1, credits: 12, status: 'Approved', createdAt: '2023-02-02' },
-  { id: 20, name: 'Charlize Theron', email: 'charlize@example.com', username: 'charlize', plan: 'Free', comments: 1, reviews: 15, credits: 2, status: 'Banned', createdAt: '2023-02-01' },
-]
-
-// Expand deterministically to multiple pages
-const data: AdminUser[] = Array.from({ length: 17 }).flatMap((_, i) =>
-  seed.map((row) => ({
-    ...row,
-    id: row.id + i * 10,
-    name: i ? `${row.name} ${i + 1}` : row.name,
-    username: i ? `${row.username}${i + 1}` : row.username,
-  }))
-)
+import AdminStore, { AdminUser } from '../../../lib/adminStore'
 
 export default function AdminUsersPage() {
   const [query, setQuery] = useState('')
@@ -46,13 +11,18 @@ export default function AdminUsersPage() {
   const [page, setPage] = useState(2)
   const [creditModal, setCreditModal] = useState<{ id: number; mode: 'add' | 'edit' } | null>(null)
   const [creditAmount, setCreditAmount] = useState<string>('')
+  const [version, setVersion] = useState(0)
+  const [active, setActive] = useState<AdminUser | null>(null)
+  const [userModal, setUserModal] = useState<{ mode: 'add' | 'edit'; data: Partial<AdminUser> } | null>(null)
   const pageSize = 10
+
+  useEffect(() => AdminStore.subscribe(() => setVersion((v) => v + 1)), [])
+
+  const all = useMemo(() => AdminStore.getUsers(), [version])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    let rows = data.filter((r) =>
-      !q || r.name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q) || r.username.toLowerCase().includes(q)
-    )
+    let rows = all.filter((r) => !q || r.name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q) || r.username.toLowerCase().includes(q))
     rows = rows.sort((a, b) => {
       if (sort === 'date') return b.createdAt.localeCompare(a.createdAt)
       if (sort === 'comments') return b.comments - a.comments
@@ -60,60 +30,21 @@ export default function AdminUsersPage() {
       return a.name.localeCompare(b.name)
     })
     return rows
-  }, [query, sort])
+  }, [all, query, sort])
 
   const total = filtered.length
   const start = (page - 1) * pageSize
   const rows = filtered.slice(start, start + pageSize)
 
-  const toggleStatus = (id: number) => {
-    const idx = data.findIndex((r) => r.id === id)
-    if (idx >= 0) {
-      data[idx].status = data[idx].status === 'Approved' ? 'Banned' : 'Approved'
-      setPage((p) => p)
-    }
-  }
+  const toggleStatus = (id: number) => AdminStore.toggleUserStatus(id)
+  const removeUser = (id: number) => { if (confirm('Delete this user?')) AdminStore.deleteUser(id) }
 
-  const removeUser = (id: number) => {
-    const idx = data.findIndex((r) => r.id === id)
-    if (idx >= 0) {
-      data.splice(idx, 1)
-      setPage((p) => Math.min(p, Math.max(1, Math.ceil(data.length / pageSize))))
-    }
-  }
+  const addCredits = (id: number, amount: number) => AdminStore.addCredits(id, amount)
+  const setCredits = (id: number, amount: number) => AdminStore.setCredits(id, amount)
+  const deleteCredits = (id: number) => AdminStore.resetCredits(id)
 
-  const addCredits = (id: number, amount: number) => {
-    const idx = data.findIndex((r) => r.id === id)
-    if (idx >= 0) {
-      data[idx].credits = Math.max(0, data[idx].credits + Math.floor(amount))
-      setPage((p) => p)
-    }
-  }
-
-  const setCredits = (id: number, amount: number) => {
-    const idx = data.findIndex((r) => r.id === id)
-    if (idx >= 0) {
-      data[idx].credits = Math.max(0, Math.floor(amount))
-      setPage((p) => p)
-    }
-  }
-
-  const deleteCredits = (id: number) => {
-    const idx = data.findIndex((r) => r.id === id)
-    if (idx >= 0) {
-      data[idx].credits = 0
-      setPage((p) => p)
-    }
-  }
-
-  const openAddCredits = (id: number) => {
-    setCreditAmount('')
-    setCreditModal({ id, mode: 'add' })
-  }
-  const openEditCredits = (id: number, current: number) => {
-    setCreditAmount(String(current))
-    setCreditModal({ id, mode: 'edit' })
-  }
+  const openAddCredits = (id: number) => { setCreditAmount(''); setCreditModal({ id, mode: 'add' }) }
+  const openEditCredits = (id: number, current: number) => { setCreditAmount(String(current)); setCreditModal({ id, mode: 'edit' }) }
 
   const saveCredits = () => {
     if (!creditModal) return
@@ -122,6 +53,28 @@ export default function AdminUsersPage() {
     if (creditModal.mode === 'add') addCredits(creditModal.id, value)
     else setCredits(creditModal.id, value)
     setCreditModal(null)
+  }
+
+  const openAddUser = () => setUserModal({ mode: 'add', data: { name: '', email: '', username: '', plan: 'Free', comments: 0, reviews: 0, credits: 0, status: 'Approved' } })
+  const openEditUser = (u: AdminUser) => setUserModal({ mode: 'edit', data: { ...u } })
+
+  const saveUser = () => {
+    if (!userModal) return
+    const d = userModal.data
+    if (!d.name || !d.email || !d.username || !d.plan || !d.status) return
+    const payload = {
+      name: String(d.name),
+      email: String(d.email),
+      username: String(d.username),
+      plan: d.plan as AdminUser['plan'],
+      comments: Number(d.comments ?? 0),
+      reviews: Number(d.reviews ?? 0),
+      credits: Math.max(0, Number(d.credits ?? 0)),
+      status: d.status as AdminUser['status'],
+    }
+    if (userModal.mode === 'add') AdminStore.addUser(payload)
+    else if (typeof d.id === 'number') AdminStore.updateUser(d.id, payload)
+    setUserModal(null)
   }
 
   const formatDate = (iso: string) => {
@@ -136,7 +89,7 @@ export default function AdminUsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-white">Users <span className="text-white/50 text-sm align-middle ml-2">{total.toLocaleString()} Total</span></h1>
-        <button className="px-4 py-2 rounded-lg border border-orange-500 text-orange-400 hover:bg-orange-500/10 transition-colors flex items-center gap-2">
+        <button onClick={openAddUser} className="px-4 py-2 rounded-lg border border-orange-500 text-orange-400 hover:bg-orange-500/10 transition-colors flex items-center gap-2">
           <UserPlus className="w-4 h-4" />
           ADD USER
         </button>
@@ -210,8 +163,8 @@ export default function AdminUsersPage() {
                   <td className="px-4 py-3 text-white/60">{formatDate(row.createdAt)}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <button className="p-2 rounded-md bg-white/5 hover:bg-white/10" aria-label="Preview"><Eye className="w-4 h-4 text-white" /></button>
-                      <button className="p-2 rounded-md bg-white/5 hover:bg-white/10" aria-label="Edit user"><Edit2 className="w-4 h-4 text-blue-300" /></button>
+                      <button onClick={() => setActive(row)} className="p-2 rounded-md bg-white/5 hover:bg-white/10" aria-label="Preview"><Eye className="w-4 h-4 text-white" /></button>
+                      <button onClick={() => openEditUser(row)} className="p-2 rounded-md bg-white/5 hover:bg-white/10" aria-label="Edit user"><Edit2 className="w-4 h-4 text-blue-300" /></button>
                       <button onClick={() => toggleStatus(row.id)} className="p-2 rounded-md bg-white/5 hover:bg-white/10" aria-label="Toggle Status">
                         {row.status === 'Approved' ? <Ban className="w-4 h-4 text-yellow-300" /> : <ShieldCheck className="w-4 h-4 text-green-300" />}
                       </button>
@@ -228,6 +181,62 @@ export default function AdminUsersPage() {
           <Pagination total={total} pageSize={pageSize} page={page} onPageChange={setPage} />
         </div>
       </div>
+
+      {active && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onClick={() => setActive(null)}>
+          <div className="w-full max-w-md bg-black/30 border border-white/10 rounded-xl p-5 backdrop-blur-md" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-white font-semibold">{active.name}</h3>
+              <button className="p-1 hover:bg-white/10 rounded-md" onClick={() => setActive(null)}><X className="w-4 h-4 text-white/70" /></button>
+            </div>
+            <div className="text-white/80 text-sm space-y-2">
+              <div>Email: {active.email}</div>
+              <div>Username: {active.username}</div>
+              <div>Plan: {active.plan}</div>
+              <div>Credits: {active.credits.toLocaleString()}</div>
+              <div>Status: {active.status}</div>
+              <div>Joined: {formatDate(active.createdAt)}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {userModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onClick={() => setUserModal(null)}>
+          <div className="w-full max-w-md bg-black/30 border border-white/10 rounded-xl p-5 backdrop-blur-md" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-white font-semibold">{userModal.mode === 'add' ? 'Add user' : 'Edit user'}</h3>
+              <button className="p-1 hover:bg-white/10 rounded-md" onClick={() => setUserModal(null)}><X className="w-4 h-4 text-white/70" /></button>
+            </div>
+            <div className="grid gap-3 text-sm">
+              <input value={(userModal.data.name as any) ?? ''} onChange={(e) => setUserModal({ ...userModal, data: { ...userModal.data, name: e.target.value } })} placeholder="Full name" className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30" />
+              <input value={(userModal.data.email as any) ?? ''} onChange={(e) => setUserModal({ ...userModal, data: { ...userModal.data, email: e.target.value } })} placeholder="Email" className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30" />
+              <input value={(userModal.data.username as any) ?? ''} onChange={(e) => setUserModal({ ...userModal, data: { ...userModal.data, username: e.target.value } })} placeholder="Username" className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30" />
+              <div className="grid grid-cols-2 gap-3">
+                <select value={(userModal.data.plan as any) ?? 'Free'} onChange={(e) => setUserModal({ ...userModal, data: { ...userModal.data, plan: e.target.value as any } })} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white">
+                  <option>Free</option>
+                  <option>Basic</option>
+                  <option>Premium</option>
+                  <option>Cinematic</option>
+                </select>
+                <select value={(userModal.data.status as any) ?? 'Approved'} onChange={(e) => setUserModal({ ...userModal, data: { ...userModal.data, status: e.target.value as any } })} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white">
+                  <option>Approved</option>
+                  <option>Banned</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <input value={(userModal.data.comments as any) ?? 0} onChange={(e) => setUserModal({ ...userModal, data: { ...userModal.data, comments: Number(e.target.value) } })} type="number" min={0} placeholder="Comments" className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30" />
+                <input value={(userModal.data.reviews as any) ?? 0} onChange={(e) => setUserModal({ ...userModal, data: { ...userModal.data, reviews: Number(e.target.value) } })} type="number" min={0} placeholder="Reviews" className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30" />
+              </div>
+              <input value={(userModal.data.credits as any) ?? 0} onChange={(e) => setUserModal({ ...userModal, data: { ...userModal.data, credits: Number(e.target.value) } })} type="number" min={0} placeholder="Credits" className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30" />
+              <div className="flex items-center justify-end gap-2 mt-1">
+                <button onClick={() => setUserModal(null)} className="px-3 py-2 rounded-md border border-white/10 text-white/70 hover:bg-white/10">Cancel</button>
+                <button onClick={saveUser} className="px-3 py-2 rounded-md border border-orange-500 text-orange-400 hover:bg-orange-500/10">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {creditModal && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
