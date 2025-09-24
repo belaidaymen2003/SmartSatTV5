@@ -60,3 +60,5 @@ export default function AdminLoginPage() {
         <div className="text-xs text-white/50 mt-4">Default admin: admin@hotflix.local / admin123</div>
       </form>
     </div>
+  )
+}
