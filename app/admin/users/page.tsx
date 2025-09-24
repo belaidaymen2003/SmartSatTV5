@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Search, Calendar, Eye, Edit2, Trash2, User, UserPlus, ShieldCheck, Ban, Coins, Plus, Pencil, X } from 'lucide-react'
 import Pagination from '../../../components/Admin/Pagination'
-import AdminStore, { AdminUser } from '../../../lib/adminStore'
+import AdminStore from '../../../lib/adminStore'
+import type { AdminUser } from '../../../lib/adminStore'
 
 export default function AdminUsersPage() {
   const [query, setQuery] = useState('')
