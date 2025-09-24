@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Search, Calendar, Filter, Eye, Edit2, Lock, Unlock, Trash2, Star, Plus, X } from 'lucide-react'
 import Pagination from '../../../components/Admin/Pagination'
-import AdminStore, { CatalogItem } from '../../../lib/adminStore'
+import AdminStore from '../../../lib/adminStore'
+import type { CatalogItem } from '../../../lib/adminStore'
 
 export default function AdminCatalogPage() {
   const [query, setQuery] = useState('')
