@@ -8,6 +8,7 @@ import type { CatalogItem } from '../../../lib/adminStore'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function AdminCatalogPage() {
+  const router = useRouter()
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<'All' | 'Visible' | 'Hidden'>('All')
   const [sort, setSort] = useState<'date' | 'rating' | 'views' | 'title'>('date')
@@ -80,7 +81,7 @@ export default function AdminCatalogPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-white">Catalog <span className="text-white/50 text-sm align-middle ml-2">{total} Total</span></h1>
-        <button onClick={openAdd} className="px-4 py-2 rounded-lg border border-orange-500 text-orange-400 hover:bg-orange-500/10 transition-colors flex items-center gap-2">
+        <button onClick={() => router.push('/admin/catalog/add')} className="px-4 py-2 rounded-lg border border-orange-500 text-orange-400 hover:bg-orange-500/10 transition-colors flex items-center gap-2">
           <Plus className="w-4 h-4" />
           ADD ITEM
         </button>
