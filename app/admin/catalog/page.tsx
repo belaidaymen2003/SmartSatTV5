@@ -49,7 +49,7 @@ export default function AdminCatalogPage() {
     return `${dd}.${mm}.${yyyy}`
   }
 
-  const openAdd = () => setModal({ mode: 'add', data: { title: '', rating: 7, category: 'Movie', views: 0, status: 'Visible' } })
+  const openAdd = () => setModal({ mode: 'add', data: { title: '', rating: 7, category: 'Movie', views: 0, status: 'Visible', mediaUrl: '' } })
 
   useEffect(() => {
     if (search.get('add') === '1') {
@@ -69,6 +69,7 @@ export default function AdminCatalogPage() {
       category: d.category as CatalogItem['category'],
       views: Math.max(0, Number(d.views ?? 0)),
       status: d.status as CatalogItem['status'],
+      mediaUrl: (d.mediaUrl as string) || undefined,
     }
     if (modal.mode === 'add') AdminStore.addItem(item)
     else if (typeof d.id === 'number') AdminStore.updateItem(d.id, item)
@@ -130,7 +131,12 @@ export default function AdminCatalogPage() {
                   <td className="px-4 py-3 text-white/70">{row.id}</td>
                   <td className="px-4 py-3 text-white hover:underline cursor-pointer" onClick={() => setActive(row)}>{row.title}</td>
                   <td className="px-4 py-3 text-yellow-400 font-medium flex items-center gap-1"><Star className="w-3 h-3" />{row.rating.toFixed(1)}</td>
-                  <td className="px-4 py-3 text-white/80">{row.category}</td>
+                  <td className="px-4 py-3 text-white/80">
+                    <span className="inline-flex items-center gap-2">
+                      {row.category}
+                      {row.category === 'Live TV' && <span className="px-1.5 py-0.5 text-[10px] rounded bg-red-500/20 text-red-300 border border-red-500/30">LIVE</span>}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-white/80">{row.views.toLocaleString()}</td>
                   <td className="px-4 py-3">
                     <button onClick={() => toggleStatus(row.id)} className={`px-2.5 py-1 rounded-full text-xs font-medium border ${row.status === 'Visible' ? 'text-green-400 border-green-500/40 bg-green-500/10' : 'text-white/70 border-white/20 bg-white/5'}`}>{row.status}</button>
@@ -166,6 +172,7 @@ export default function AdminCatalogPage() {
               <div>Category: {active.category}</div>
               <div>Rating: {active.rating}</div>
               <div>Views: {active.views.toLocaleString()}</div>
+              {active.mediaUrl && <div className="truncate">Source: {active.mediaUrl}</div>}
               <div>Status: {active.status}</div>
               <div>Created: {formatDate(active.createdAt)}</div>
             </div>
@@ -192,12 +199,20 @@ export default function AdminCatalogPage() {
                   <option>TV Series</option>
                   <option>Anime</option>
                   <option>Cartoon</option>
+                  <option>Live TV</option>
+                  <option>Streaming</option>
                 </select>
                 <select value={modal.data.status as any} onChange={(e) => setModal({ ...modal, data: { ...modal.data, status: e.target.value as any } })} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white">
                   <option>Visible</option>
                   <option>Hidden</option>
                 </select>
               </div>
+              {(modal.data.category === 'Live TV' || modal.data.category === 'Streaming') && (
+                <input value={(modal.data.mediaUrl as any) ?? ''} onChange={(e) => setModal({ ...modal, data: { ...modal.data, mediaUrl: e.target.value } })} placeholder="Stream URL (HLS .m3u8 / DASH .mpd)" className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30" />
+              )}
+              {modal.data.category !== 'Live TV' && modal.data.category !== 'Streaming' && (
+                <input value={(modal.data.mediaUrl as any) ?? ''} onChange={(e) => setModal({ ...modal, data: { ...modal.data, mediaUrl: e.target.value } })} placeholder="Video URL (mp4/hls)" className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30" />
+              )}
               <div className="flex items-center justify-end gap-2 mt-1">
                 <button onClick={() => setModal(null)} className="px-3 py-2 rounded-md border border-white/10 text-white/70 hover:bg-white/10">Cancel</button>
                 <button onClick={save} className="px-3 py-2 rounded-md border border-orange-500 text-orange-400 hover:bg-orange-500/10">Save</button>
