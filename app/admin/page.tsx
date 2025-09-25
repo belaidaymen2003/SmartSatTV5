@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Star, TrendingUp, Eye, Plus } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import StatsCard from '../../components/Admin/StatsCard'
 import TableCard from '../../components/Admin/TableCard'
 import AdminStore from '../../lib/adminStore'
@@ -36,11 +37,12 @@ export default function AdminPage() {
   const latestItems = [...catalog].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5).map((x) => ({ id: x.id, item: x.title, category: x.category, rating: x.rating }))
   const latestUsers = [...users].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5).map((u) => ({ id: u.id, full_name: u.name, email: u.email, username: u.username }))
 
+  const router = useRouter()
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-white">Dashboard</h1>
-        <button className="px-4 py-2 rounded-lg border border-orange-500 text-orange-400 hover:bg-orange-500/10 transition-colors flex items-center gap-2">
+        <button onClick={() => router.push('/admin/catalog?add=1')} className="px-4 py-2 rounded-lg border border-orange-500 text-orange-400 hover:bg-orange-500/10 transition-colors flex items-center gap-2">
           <Plus className="w-4 h-4" />
           ADD ITEM
         </button>
