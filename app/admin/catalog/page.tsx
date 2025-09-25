@@ -38,15 +38,16 @@ export default function AdminCatalogPage() {
   const total = filtered.length
   const start = (page - 1) * pageSize
   const rows = filtered.slice(start, start + pageSize)
+  const nf = new Intl.NumberFormat('en-US')
 
   const toggleStatus = (id: number) => AdminStore.toggleItemStatus(id)
   const remove = (id: number) => { if (confirm('Delete this item?')) AdminStore.deleteItem(id) }
 
   const formatDate = (iso: string) => {
-    const d = new Date(iso)
-    const dd = String(d.getDate()).padStart(2, '0')
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const yyyy = d.getFullYear()
+    const [y, m, d] = iso.split('-').map(Number)
+    const dd = String(d).padStart(2, '0')
+    const mm = String(m).padStart(2, '0')
+    const yyyy = y
     return `${dd}.${mm}.${yyyy}`
   }
 
@@ -80,7 +81,7 @@ export default function AdminCatalogPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-white">Catalog <span className="text-white/50 text-sm align-middle ml-2">{total} Total</span></h1>
+        <h1 className="text-2xl font-semibold text-white">Catalog <span className="text-white/50 text-sm align-middle ml-2">{new Intl.NumberFormat('en-US').format(total)} Total</span></h1>
         <button onClick={() => router.push('/admin/catalog/add')} className="px-4 py-2 rounded-lg border border-orange-500 text-orange-400 hover:bg-orange-500/10 transition-colors flex items-center gap-2">
           <Plus className="w-4 h-4" />
           ADD ITEM
@@ -138,7 +139,7 @@ export default function AdminCatalogPage() {
                       {row.category === 'Live TV' && <span className="px-1.5 py-0.5 text-[10px] rounded bg-red-500/20 text-red-300 border border-red-500/30">LIVE</span>}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-white/80">{row.views.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-white/80">{nf.format(row.views)}</td>
                   <td className="px-4 py-3">
                     <button onClick={() => toggleStatus(row.id)} className={`px-2.5 py-1 rounded-full text-xs font-medium border ${row.status === 'Visible' ? 'text-green-400 border-green-500/40 bg-green-500/10' : 'text-white/70 border-white/20 bg-white/5'}`}>{row.status}</button>
                   </td>
@@ -172,7 +173,7 @@ export default function AdminCatalogPage() {
             <div className="text-white/80 text-sm space-y-2">
               <div>Category: {active.category}</div>
               <div>Rating: {active.rating}</div>
-              <div>Views: {active.views.toLocaleString()}</div>
+              <div>Views: {nf.format(active.views)}</div>
               {active.mediaUrl && <div className="truncate">Source: {active.mediaUrl}</div>}
               <div>Status: {active.status}</div>
               <div>Created: {formatDate(active.createdAt)}</div>
