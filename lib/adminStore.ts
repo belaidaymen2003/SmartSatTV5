@@ -7,6 +7,17 @@ export type CatalogItem = {
   status: 'Visible' | 'Hidden'
   createdAt: string
   mediaUrl?: string
+  quality?: 'SD' | 'HD' | 'FullHD' | '4K'
+  age?: string
+  description?: string
+  genres?: string[]
+  runtime?: string
+  premiereDate?: string
+  coverUrl?: string
+  backgroundUrl?: string
+  country?: string
+  director?: string
+  actors?: string[]
 }
 
 export type AdminUser = {
