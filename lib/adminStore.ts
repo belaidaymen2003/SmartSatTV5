@@ -2,10 +2,11 @@ export type CatalogItem = {
   id: number
   title: string
   rating: number
-  category: 'Movie' | 'TV Series' | 'Anime' | 'Cartoon'
+  category: 'Movie' | 'TV Series' | 'Anime' | 'Cartoon' | 'Live TV' | 'Streaming'
   views: number
   status: 'Visible' | 'Hidden'
   createdAt: string
+  mediaUrl?: string
 }
 
 export type AdminUser = {
@@ -50,8 +51,8 @@ let catalogSeed: CatalogItem[] = [
   { id: 15, title: 'Into the Unknown', rating: 7.9, category: 'Movie', views: 5092, status: 'Visible', createdAt: '2023-02-03' },
   { id: 16, title: 'The Unseen Journey', rating: 7.1, category: 'TV Series', views: 2713, status: 'Hidden', createdAt: '2023-02-03' },
   { id: 17, title: 'Savage Beauty', rating: 6.3, category: 'Cartoon', views: 901, status: 'Visible', createdAt: '2023-02-03' },
-  { id: 18, title: 'Endless Horizon', rating: 8.4, category: 'Movie', views: 8430, status: 'Visible', createdAt: '2023-02-02' },
-  { id: 19, title: 'The Lost Key', rating: 7.9, category: 'Movie', views: 818, status: 'Visible', createdAt: '2023-02-02' },
+  { id: 18, title: 'Live: World News', rating: 0, category: 'Live TV', views: 12034, status: 'Visible', createdAt: '2023-02-02', mediaUrl: 'https://example.com/live/news.m3u8' },
+  { id: 19, title: 'Endless Horizon', rating: 8.4, category: 'Movie', views: 8430, status: 'Visible', createdAt: '2023-02-02' },
   { id: 20, title: 'Echoes of Yesterday', rating: 7.1, category: 'Anime', views: 1046, status: 'Hidden', createdAt: '2023-02-01' },
 ]
 
