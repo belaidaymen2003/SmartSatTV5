@@ -22,11 +22,8 @@ export default function AdminPage() {
   const users = useMemo(() => AdminStore.getUsers(), [version])
   const catalog = useMemo(() => AdminStore.getCatalog(), [version])
 
-  const now = new Date()
-  const sameMonth = (iso: string) => {
-    const [y, m] = iso.split('-').map(Number)
-    return (m - 1) === now.getMonth() && y === now.getFullYear()
-  }
+  const nowYYYYMM = new Date().toISOString().slice(0, 7)
+  const sameMonth = (iso: string) => iso.slice(0, 7) === nowYYYYMM
 
   const subsThisMonth = users.filter((u) => sameMonth(u.createdAt)).length
   const itemsThisMonth = catalog.filter((c) => sameMonth(c.createdAt)).length
