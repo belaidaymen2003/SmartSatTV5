@@ -38,6 +38,7 @@ export default function AdminUsersPage() {
   const total = filtered.length
   const start = (page - 1) * pageSize
   const rows = filtered.slice(start, start + pageSize)
+  const nf = new Intl.NumberFormat('en-US')
 
   const toggleStatus = (id: number) => AdminStore.toggleUserStatus(id)
   const removeUser = (id: number) => { if (confirm('Delete this user?')) AdminStore.deleteUser(id) }
@@ -88,17 +89,17 @@ export default function AdminUsersPage() {
   }
 
   const formatDate = (iso: string) => {
-    const d = new Date(iso)
-    const dd = String(d.getDate()).padStart(2, '0')
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const yyyy = d.getFullYear()
+    const [y, m, d] = iso.split('-').map(Number)
+    const dd = String(d).padStart(2, '0')
+    const mm = String(m).padStart(2, '0')
+    const yyyy = y
     return `${dd}.${mm}.${yyyy}`
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-white">Users <span className="text-white/50 text-sm align-middle ml-2">{total.toLocaleString()} Total</span></h1>
+        <h1 className="text-2xl font-semibold text-white">Users <span className="text-white/50 text-sm align-middle ml-2">{new Intl.NumberFormat('en-US').format(total)} Total</span></h1>
         <button onClick={openAddUser} className="px-4 py-2 rounded-lg border border-orange-500 text-orange-400 hover:bg-orange-500/10 transition-colors flex items-center gap-2">
           <UserPlus className="w-4 h-4" />
           ADD USER
@@ -160,7 +161,7 @@ export default function AdminUsersPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-1 rounded-full text-xs bg-yellow-500/10 text-yellow-300 border border-yellow-500/30 inline-flex items-center gap-1">
-                        <Coins className="w-3 h-3" /> {row.credits.toLocaleString()}
+                        <Coins className="w-3 h-3" /> {nf.format(row.credits)}
                       </span>
                       <button onClick={() => openAddCredits(row.id)} className="p-1.5 rounded-md bg-white/5 hover:bg-white/10" aria-label="Add credits"><Plus className="w-3.5 h-3.5 text-green-300" /></button>
                       <button onClick={() => openEditCredits(row.id, row.credits)} className="p-1.5 rounded-md bg-white/5 hover:bg-white/10" aria-label="Edit credits"><Pencil className="w-3.5 h-3.5 text-blue-300" /></button>
