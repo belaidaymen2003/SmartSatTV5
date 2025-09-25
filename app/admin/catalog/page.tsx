@@ -5,6 +5,7 @@ import { Search, Calendar, Filter, Eye, Edit2, Lock, Unlock, Trash2, Star, Plus,
 import Pagination from '../../../components/Admin/Pagination'
 import AdminStore from '../../../lib/adminStore'
 import type { CatalogItem } from '../../../lib/adminStore'
+import { useSearchParams } from 'next/navigation'
 
 export default function AdminCatalogPage() {
   const [query, setQuery] = useState('')
@@ -15,6 +16,7 @@ export default function AdminCatalogPage() {
   const [active, setActive] = useState<CatalogItem | null>(null)
   const [modal, setModal] = useState<{ mode: 'add' | 'edit'; data: Partial<CatalogItem> } | null>(null)
   const pageSize = 10
+  const search = useSearchParams()
 
   useEffect(() => AdminStore.subscribe(() => setVersion((v) => v + 1)), [])
 
@@ -48,6 +50,13 @@ export default function AdminCatalogPage() {
   }
 
   const openAdd = () => setModal({ mode: 'add', data: { title: '', rating: 7, category: 'Movie', views: 0, status: 'Visible' } })
+
+  useEffect(() => {
+    if (search.get('add') === '1') {
+      openAdd()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
   const openEdit = (it: CatalogItem) => setModal({ mode: 'edit', data: { ...it } })
 
   const save = () => {
