@@ -24,13 +24,14 @@ export default function AdminPage() {
 
   const now = new Date()
   const sameMonth = (iso: string) => {
-    const d = new Date(iso)
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+    const [y, m] = iso.split('-').map(Number)
+    return (m - 1) === now.getMonth() && y === now.getFullYear()
   }
 
   const subsThisMonth = users.filter((u) => sameMonth(u.createdAt)).length
   const itemsThisMonth = catalog.filter((c) => sameMonth(c.createdAt)).length
   const views = catalog.reduce((s, c) => s + (c.views || 0), 0)
+  const nf = new Intl.NumberFormat('en-US')
   const reviewsCount = users.reduce((s, u) => s + (u.reviews || 0), 0)
 
   const topItems = [...catalog].sort((a, b) => b.rating - a.rating).slice(0, 5).map((x) => ({ id: x.id, title: x.title, category: x.category, rating: x.rating }))
@@ -51,7 +52,7 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatsCard title="Subscriptions this month" value={subsThisMonth} change={subsThisMonth ? '+0' : undefined} icon={<TrendingUp className="w-6 h-6" />} />
         <StatsCard title="Items added this month" value={itemsThisMonth} change={itemsThisMonth ? '+0' : undefined} icon={<Star className="w-6 h-6" />} />
-        <StatsCard title="Views (all time)" value={views.toLocaleString()} change={"+0%"} icon={<Eye className="w-6 h-6" />} />
+        <StatsCard title="Views (all time)" value={nf.format(views)} change={"+0%"} icon={<Eye className="w-6 h-6" />} />
         <StatsCard title="Reviews (all users)" value={reviewsCount} change={"+0"} icon={<Star className="w-6 h-6" />} />
       </div>
 
