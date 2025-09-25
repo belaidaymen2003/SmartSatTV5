@@ -5,6 +5,7 @@ import { Search, Calendar, Eye, Edit2, Trash2, User, UserPlus, ShieldCheck, Ban,
 import Pagination from '../../../components/Admin/Pagination'
 import AdminStore from '../../../lib/adminStore'
 import type { AdminUser } from '../../../lib/adminStore'
+import { useSearchParams } from 'next/navigation'
 
 export default function AdminUsersPage() {
   const [query, setQuery] = useState('')
@@ -16,6 +17,7 @@ export default function AdminUsersPage() {
   const [active, setActive] = useState<AdminUser | null>(null)
   const [userModal, setUserModal] = useState<{ mode: 'add' | 'edit'; data: Partial<AdminUser> } | null>(null)
   const pageSize = 10
+  const search = useSearchParams()
 
   useEffect(() => AdminStore.subscribe(() => setVersion((v) => v + 1)), [])
 
@@ -57,6 +59,13 @@ export default function AdminUsersPage() {
   }
 
   const openAddUser = () => setUserModal({ mode: 'add', data: { name: '', email: '', username: '', plan: 'Free', comments: 0, reviews: 0, credits: 0, status: 'Approved' } })
+
+  useEffect(() => {
+    if (search.get('add') === '1') {
+      openAddUser()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
   const openEditUser = (u: AdminUser) => setUserModal({ mode: 'edit', data: { ...u } })
 
   const saveUser = () => {
