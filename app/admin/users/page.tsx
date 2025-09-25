@@ -100,7 +100,7 @@ export default function AdminUsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-white">Users <span suppressHydrationWarning className="text-white/50 text-sm align-middle ml-2">{new Intl.NumberFormat('en-US').format(total)} Total</span></h1>
-        <button onClick={openAddUser} className="px-4 py-2 rounded-lg border border-orange-500 text-orange-400 hover:bg-orange-500/10 transition-colors flex items-center gap-2">
+        <button onClick={() => (window.location.href = '/admin/users/add')} className="px-4 py-2 rounded-lg border border-orange-500 text-orange-400 hover:bg-orange-500/10 transition-colors flex items-center gap-2">
           <UserPlus className="w-4 h-4" />
           ADD USER
         </button>
