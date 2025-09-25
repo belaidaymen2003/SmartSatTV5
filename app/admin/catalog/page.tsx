@@ -5,7 +5,7 @@ import { Search, Calendar, Filter, Eye, Edit2, Lock, Unlock, Trash2, Star, Plus,
 import Pagination from '../../../components/Admin/Pagination'
 import AdminStore from '../../../lib/adminStore'
 import type { CatalogItem } from '../../../lib/adminStore'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function AdminCatalogPage() {
   const [query, setQuery] = useState('')
