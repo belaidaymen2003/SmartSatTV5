@@ -29,6 +29,11 @@ enum UserStatus {
   APPROVED
   BANNED
 }
+enum UserAuth {
+  CONNECTED
+  DISCONNECTED
+  
+}
 
 enum Visibility {
   VISIBLE
@@ -49,7 +54,8 @@ enum Quality {
   SD
   HD
   FULLHD
-  K4
+  FOUR_K
+  EIGHT_K
 }
 
 enum CommentStatus {
@@ -65,11 +71,11 @@ model User {
   username       String        @unique
   passwordHash   String
   role           Role          @default(USER)
-  plan           Plan          @default(FREE)
   status         UserStatus    @default(APPROVED)
   credits        Int           @default(0)
   commentsCount  Int           @default(0)
   reviewsCount   Int           @default(0)
+  Auth           UserAuth     @default(DISCONNECTED)
   reviews        Review[]
   comments       Comment[]
   purchases      Purchase[]
@@ -89,9 +95,9 @@ model Content {
   price          Int?          // credits
   mediaUrl       String?
   imageUrl       String?
+  images         String[]      // Postgres array
   trailerUrl     String?
   quality        Quality?
-  age            String?
   description    String?
   longDescription String?
   genres         String[]      // Postgres array
@@ -104,7 +110,6 @@ model Content {
   actors         String[]      // Postgres array
   seasons        Int?
   episodes       Int?
-
   reviews        Review[]
   comments       Comment[]
   purchases      Purchase[]
