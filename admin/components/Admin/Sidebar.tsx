@@ -8,7 +8,7 @@ import logo from '../../public/Logo2.png'
 export default function Sidebar() {
   const logout = async () => {
     await fetch('/api/admin/logout', { method: 'POST' })
-    window.location.href = '/admin/login'
+    window.location.href = '/'
   }
   return (
     <aside className="flex flex-col   items-center   gap-3  pt-3  w-72 min-h-screen bg-black/30 backdrop-blur-sm text-white border-r border-white/10 fixed left-0 top-0">
@@ -25,7 +25,7 @@ export default function Sidebar() {
         </div>
 
         <nav className=" flex flex-col gap-1">
-          <Link href="/" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/10 transition-colors text-orange-400 bg-orange-500/10">
+          <Link href="/admin" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/10 transition-colors text-orange-400 bg-orange-500/10">
             <Home className="w-4 h-4" />
             <span className="text-sm font-semibold">DASHBOARD</span>
           </Link>

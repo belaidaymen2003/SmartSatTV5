@@ -1,67 +1,80 @@
 "use client"
 
-import { useEffect, useMemo, useState } from 'react'
-import { Star, TrendingUp, Eye, Plus } from 'lucide-react'
+import { useState } from 'react'
+import { Lock, Mail, LogIn } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import StatsCard from '../components/Admin/StatsCard'
-import TableCard from '../components/Admin/TableCard'
-import AdminStore from '../lib/adminStore'
+import Logo from '../public/Logo2.png'
+import Image from 'next/image'
 
-const latestReviews = [
-  { id: 824, item: 'I Dream in Another Language', author: 'Eliza Josceline', rating: 7.2 },
-  { id: 602, item: 'Benched', author: 'Ketut', rating: 6.3 },
-  { id: 538, item: 'Whitney', author: 'Brian Cranston', rating: 8.4 },
-  { id: 129, item: 'Blindspotting', author: 'Quang', rating: 9.0 },
-  { id: 360, item: 'Another', author: 'Jackson Brown', rating: 7.7 },
-]
+export default function AdminLoginPage() {
+   const router = useRouter()
+  const [emailorusername, setEmailOrUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-export default function AdminPage() {
-  const [version, setVersion] = useState(0)
-  useEffect(() => {AdminStore.subscribe(() => setVersion((v) => v + 1))}, [])
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      const res = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ emailorusername, password }) })
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        throw new Error(j.message || 'Invalid credentials')
+      }
+      router.push('/admin')
+      router.refresh()
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const users = useMemo(() => AdminStore.getUsers(), [version])
-  const catalog = useMemo(() => AdminStore.getCatalog(), [version])
-
-  const nowYYYYMM = new Date().toISOString().slice(0, 7)
-  const sameMonth = (iso: string) => iso.slice(0, 7) === nowYYYYMM
-
-  const subsThisMonth = users.filter((u) => sameMonth(u.createdAt)).length
-  const itemsThisMonth = catalog.filter((c) => sameMonth(c.createdAt)).length
-  const views = catalog.reduce((s, c) => s + (c.views || 0), 0)
-  const nf = new Intl.NumberFormat('en-US')
-  const reviewsCount = users.reduce((s, u) => s + (u.reviews || 0), 0)
-
-  const topItems = [...catalog].sort((a, b) => b.rating - a.rating).slice(0, 5).map((x) => ({ id: x.id, title: x.title, category: x.category, rating: x.rating }))
-  const latestItems = [...catalog].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5).map((x) => ({ id: x.id, item: x.title, category: x.category, rating: x.rating }))
-  const latestUsers = [...users].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5).map((u) => ({ id: u.id, full_name: u.name, email: u.email, username: u.username }))
-
-  const router = useRouter()
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-white">Dashboard</h1>
-        <button onClick={() => router.push('/admin/catalog/add')} className="px-4 py-2 rounded-lg border border-orange-500 text-orange-400 hover:bg-orange-500/10 transition-colors flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          ADD ITEM
+    <div className="min-h-screen grid place-items-center relative overflow-hidden text-white p-6">
+      {/* Video Background */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 opacity-50 w-full h-full object-cover z-0"
+      >
+        <source src="/loginbg.mp4" type="video/mp4" />
+      </video>
+      {/* Overlay for darkening effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 opacity-80 z-10" />
+      {/* Content */}
+      <form onSubmit={onSubmit} className="w-full max-w-sm bg-black/30 border border-white/10 rounded-2xl p-6 backdrop-blur-md shadow-xl relative z-20">
+      <div className="mb-6 text-center">
+          <Image src={Logo} alt="Logo" className="w-28 h-28 mx-auto mb-2" />
+          <h1 className="text-2xl font-semibold">Admin Login</h1>
+          <p className="text-white/60 text-sm mt-1">Sign in to access the dashboard</p>
+        </div>
+
+        {error && <div className="mb-4 text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">{error}</div>}
+
+        <label className="block text-sm text-white/70 mb-2">Email or username</label>
+        <div className="flex items-center gap-2 bg-black/40 border border-white/10 rounded-lg px-3 py-2 mb-4">
+          <Mail className="w-4 h-4 text-white/60" />
+          <input value={emailorusername} onChange={(e) => setEmailOrUsername(e.target.value)} type="text" required placeholder="you@example.com" className="bg-transparent outline-none text-white placeholder-white/40 w-full" />
+        </div>
+
+        <label className="block text-sm text-white/70 mb-2">Password</label>
+        <div className="flex items-center gap-2 bg-black/40 border border-white/10 rounded-lg px-3 py-2 mb-6">
+          <Lock className="w-4 h-4 text-white/60" />
+          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required placeholder="••••••••" className="bg-transparent outline-none text-white placeholder-white/40 w-full" />
+        </div>
+
+        <button disabled={loading} className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-orange-500 text-orange-400 hover:bg-orange-500/10 disabled:opacity-60">
+          <LogIn className="w-4 h-4" />
+          {loading ? 'Signing in...' : 'Sign In'}
         </button>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <StatsCard title="Subscriptions this month" value={subsThisMonth} change={subsThisMonth ? '+0' : undefined} icon={<TrendingUp className="w-6 h-6" />} />
-        <StatsCard title="Items added this month" value={itemsThisMonth} change={itemsThisMonth ? '+0' : undefined} icon={<Star className="w-6 h-6" />} />
-        <StatsCard title="Views (all time)" value={nf.format(views)} change={"+0%"} icon={<Eye className="w-6 h-6" />} />
-        <StatsCard title="Reviews (all users)" value={reviewsCount} change={"+0"} icon={<Star className="w-6 h-6" />} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TableCard title="Top Items" columns={["ID","Title","Category","Rating"]} rows={topItems} />
-        <TableCard title="Latest Items" columns={["ID","Item","Category","Rating"]} rows={latestItems} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TableCard title="Latest users" columns={["ID","Full Name","Email","Username"]} rows={latestUsers} />
-        <TableCard title="Latest reviews" columns={["ID","Item","Author","Rating"]} rows={latestReviews} />
-      </div>
+  <div className="text-xs text-white/50 mt-4">Default admin: admin@hotflix.local / admin123</div>
+      </form>
     </div>
   )
 }
