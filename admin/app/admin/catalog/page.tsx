@@ -19,7 +19,7 @@ export default function AdminCatalogPage() {
   const pageSize = 10
   const search = useSearchParams()
 
-  useEffect(() => AdminStore.subscribe(() => setVersion((v) => v + 1)), [])
+  useEffect(() => {AdminStore.subscribe(() => setVersion((v) => v + 1))}, [])
 
   const all = useMemo(() => AdminStore.getCatalog(), [version])
 
