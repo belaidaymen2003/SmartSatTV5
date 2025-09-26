@@ -7,12 +7,15 @@ import './globals.css'
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className='min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white'>
-    <body className="min-h-screen bg-gradient-to-br  bg-fixed from-slate-900 via-purple-900 to-slate-900 text-white">
-      <Sidebar />
-      <main className="ml-72 p-8 min-h-screen">
-        <div className="max-w-[1400px] mx-auto">{children}</div>
-      </main>
-    </body>
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+      </head>
+      <body className="min-h-screen bg-gradient-to-br  bg-fixed from-slate-900 via-purple-900 to-slate-900 text-white">
+        <Sidebar />
+        <main className="ml-72 p-8 min-h-screen">
+          <div className="max-w-[1400px] mx-auto">{children}</div>
+        </main>
+      </body>
     </html>
   )
 }
