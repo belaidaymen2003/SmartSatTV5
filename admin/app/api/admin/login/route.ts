@@ -12,3 +12,9 @@ export async function POST(req: Request) {
   }
   return NextResponse.json({ ok: false, message: 'Invalid credentials' }, { status: 401 })
 }
+
+
+export async function GET(req: Request) {
+
+  return NextResponse.json({  })
+}
