@@ -33,6 +33,34 @@ export type AdminUser = {
   createdAt: string
 }
 
+export type AdminComment = {
+  id: number
+  itemId: number
+  itemTitle: string
+  author: string
+  content: string
+  status: 'Pending' | 'Approved' | 'Hidden'
+  createdAt: string
+}
+
+export type AdminReview = {
+  id: number
+  itemId: number
+  itemTitle: string
+  author: string
+  rating: number
+  content?: string
+  status: 'Pending' | 'Approved' | 'Hidden'
+  createdAt: string
+}
+
+export type AdminSettings = {
+  brandName: string
+  accentColor: string
+  allowRegistrations: boolean
+  maintenanceMode: boolean
+}
+
 let usersSeed: AdminUser[] = [
   { id: 11, name: 'Tess Harper', email: 'tess@example.com', username: 'tessharper', plan: 'Premium', comments: 13, reviews: 1, credits: 120, status: 'Approved', createdAt: '2023-02-05' },
   { id: 12, name: 'Gene Graham', email: 'gene@example.com', username: 'gene', plan: 'Free', comments: 1, reviews: 15, credits: 0, status: 'Approved', createdAt: '2023-02-05' },
@@ -71,8 +99,25 @@ catalogSeed = Array.from({ length: 6 }).flatMap((_, i) =>
   catalogSeed.map((row) => ({ ...row, id: row.id + i * 20, title: i ? `${row.title} ${i + 1}` : row.title }))
 )
 
+// Seed comments and reviews using catalogSeed for item titles
+let commentsSeed: AdminComment[] = [
+  { id: 101, itemId: 11, itemTitle: catalogSeed[0].title, author: 'Eliza', content: 'Great movie!', status: 'Approved', createdAt: '2023-02-05' },
+  { id: 102, itemId: 12, itemTitle: catalogSeed[1].title, author: 'Matt', content: 'Please fix subtitles.', status: 'Pending', createdAt: '2023-02-05' },
+  { id: 103, itemId: 18, itemTitle: catalogSeed[7].title, author: 'Brian', content: 'Stream buffers sometimes.', status: 'Pending', createdAt: '2023-02-02' },
+]
+
+let reviewsSeed: AdminReview[] = [
+  { id: 201, itemId: 15, itemTitle: catalogSeed[4].title, author: 'Rosa', rating: 8.0, content: 'Beautiful visuals', status: 'Approved', createdAt: '2023-02-03' },
+  { id: 202, itemId: 19, itemTitle: catalogSeed[8].title, author: 'Tess', rating: 9.2, content: 'Loved it!', status: 'Approved', createdAt: '2023-02-02' },
+  { id: 203, itemId: 20, itemTitle: catalogSeed[9].title, author: 'Gene', rating: 6.5, content: 'Good but slow', status: 'Pending', createdAt: '2023-02-01' },
+]
+
 let users = [...usersSeed]
 let catalog = [...catalogSeed]
+let comments = [...commentsSeed]
+let reviews = [...reviewsSeed]
+let settings: AdminSettings = { brandName: 'HOTFLIX', accentColor: '#f97316', allowRegistrations: true, maintenanceMode: false }
+
 let version = 0
 const listeners = new Set<() => void>()
 const notify = () => { version++; listeners.forEach((l) => l()) }
@@ -133,6 +178,46 @@ export const AdminStore = {
     const i = catalog.findIndex((x) => x.id === id)
     if (i >= 0) { catalog[i].status = catalog[i].status === 'Visible' ? 'Hidden' : 'Visible'; notify() }
   },
+
+  // comments
+  getComments() { return comments.slice() },
+  addComment(c: Omit<AdminComment, 'id' | 'createdAt' | 'status'> & Partial<Pick<AdminComment, 'status' | 'createdAt'>>) {
+    const id = comments.length ? Math.max(...comments.map((x) => x.id)) + 1 : 1
+    const createdAt = c.createdAt ?? new Date().toISOString().slice(0, 10)
+    comments.unshift({ ...c, id, createdAt, status: c.status ?? 'Pending' })
+    notify(); return id
+  },
+  updateComment(id: number, patch: Partial<AdminComment>) {
+    const i = comments.findIndex((x) => x.id === id)
+    if (i >= 0) { comments[i] = { ...comments[i], ...patch, id: comments[i].id }; notify() }
+  },
+  deleteComment(id: number) { comments = comments.filter((x) => x.id !== id); notify() },
+  setCommentStatus(id: number, status: AdminComment['status']) {
+    const i = comments.findIndex((x) => x.id === id)
+    if (i >= 0) { comments[i].status = status; notify() }
+  },
+
+  // reviews
+  getReviews() { return reviews.slice() },
+  addReview(r: Omit<AdminReview, 'id' | 'createdAt' | 'status'> & Partial<Pick<AdminReview, 'status' | 'createdAt'>>) {
+    const id = reviews.length ? Math.max(...reviews.map((x) => x.id)) + 1 : 1
+    const createdAt = r.createdAt ?? new Date().toISOString().slice(0, 10)
+    reviews.unshift({ ...r, id, createdAt, status: r.status ?? 'Pending' })
+    notify(); return id
+  },
+  updateReview(id: number, patch: Partial<AdminReview>) {
+    const i = reviews.findIndex((x) => x.id === id)
+    if (i >= 0) { reviews[i] = { ...reviews[i], ...patch, id: reviews[i].id }; notify() }
+  },
+  deleteReview(id: number) { reviews = reviews.filter((x) => x.id !== id); notify() },
+  setReviewStatus(id: number, status: AdminReview['status']) {
+    const i = reviews.findIndex((x) => x.id === id)
+    if (i >= 0) { reviews[i].status = status; notify() }
+  },
+
+  // settings
+  getSettings() { return { ...settings } },
+  updateSettings(patch: Partial<AdminSettings>) { settings = { ...settings, ...patch }; notify() },
 }
 
 export default AdminStore;
