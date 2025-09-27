@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { Home, Grid, Users, MessageCircle, Star, Settings, ArrowLeft, LogOut, User, Globe, Zap, PlayCircle, ChevronDown, Folder } from 'lucide-react'
 import logo from '../../public/Logo2.png'
 
-export default function Sidebar() {
+export default function Sidebar({ className = '' }: { className?: string }) {
   const [categoriesOpen, setCategoriesOpen] = useState(true)
 
   const logout = async () => {
@@ -14,7 +14,7 @@ export default function Sidebar() {
     window.location.href = '/'
   }
   return (
-    <aside className="flex flex-col   items-center   gap-3  pt-3  w-72 min-h-screen bg-black/30 backdrop-blur-sm text-white border-r border-white/10 fixed left-0 top-0">
+    <aside className={`flex flex-col items-center gap-3 pt-3 w-72 min-h-screen bg-black/30 backdrop-blur-sm text-white border-r border-white/10 fixed left-0 top-0 ${className}`}>
       <div className=" flex items-center gap-3">
         <Image src={logo} alt="Hotflix" width={100} height={100} />
       </div>
