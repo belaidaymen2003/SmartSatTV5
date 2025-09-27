@@ -1,5 +1,5 @@
 import { NextResponse, userAgent } from 'next/server'
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@/lib/generated/prisma";
 const prisma  = new PrismaClient()
 export async function POST(req: Request, res: Response) {
   //const result = await req.json().catch(() => ({}))
@@ -9,16 +9,19 @@ export async function POST(req: Request, res: Response) {
     if (!emailorusername || !password) {
       return NextResponse.json({ message: 'Email/Username and password are required' }, { status: 400 });
     }
-
-    const user = await prisma.User.findUnique({
+    function isEmail(input: string): boolean {
+        return input.includes('@');
+    }
+    const user = await prisma.user.findFirst({
       where: {
+        ...(isEmail(emailorusername)
+          ? { email: emailorusername }
+          : { username: emailorusername }),
+        passwordHash: password,
         role: 'ADMIN',
-        username: emailorusername ,
-        passwordHash: password
-
-      },
+      }
     });
-  return NextResponse.json(user);
+    return NextResponse.json(user ? { message: 'Login successful', user } : { message: 'Invalid credentials' }, { status: user ? 200 : 401 });
   
 
 }
