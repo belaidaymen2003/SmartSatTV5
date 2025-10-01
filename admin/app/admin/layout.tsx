@@ -1,26 +1,38 @@
-import { PrismaClient } from "@prisma/client";
-import { redirect } from 'next/navigation';
-import Sidebar from '../../components/Admin/Sidebar'
-// import './../globals.css'
-// export const metadata = {
-//   title: 'Admin - HOTFLIX',
-// }
+'use client'
 
+import { useState } from 'react'
+import Sidebar from '../../components/Admin/Sidebar'
+import { Menu } from 'lucide-react'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-// redirect('/')
+  const [open, setOpen] = useState(false)
 
   return (
-    <html lang="en" className='min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white'>
-      <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-      </head>
-      <body className="min-h-screen bg-gradient-to-br  bg-fixed from-slate-900 via-purple-900 to-slate-900 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
+      {/* Desktop sidebar */}
+      <div className="hidden md:block">
         <Sidebar />
-        <main className="ml-72 p-8 min-h-screen">
-          <div className="max-w-[1400px] mx-auto">{children}</div>
-        </main>
-      </body>
-    </html>
+      </div>
+
+      {/* Mobile top bar */}
+      <div className="md:hidden sticky top-0 z-40 flex items-center gap-3 px-4 py-3 bg-black/40 backdrop-blur border-b border-white/10">
+        <button aria-label="Open menu" className="p-2 rounded-md bg-white/10" onClick={() => setOpen(true)}>
+          <Menu className="w-5 h-5" />
+        </button>
+        <div className="text-sm font-semibold">Admin</div>
+      </div>
+
+      {/* Mobile drawer */}
+      {open && (
+        <div className="md:hidden fixed inset-0 z-50" aria-modal="true" role="dialog">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setOpen(false)} />
+          <Sidebar className="z-50" />
+        </div>
+      )}
+
+      <main className="md:ml-72 ml-0 p-4 md:p-8 min-h-screen">
+        <div className="max-w-[1400px] mx-auto">{children}</div>
+      </main>
+    </div>
   )
 }
