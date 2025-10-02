@@ -14,7 +14,7 @@ export default function Sidebar({ className = '' }: { className?: string }) {
     window.location.href = '/'
   }
   return (
-    <aside className={`flex flex-col items-center gap-3 pt-3 w-72 min-h-screen bg-black/30 backdrop-blur-sm text-white border-r border-white/10 fixed left-0 top-0 ${className}`}>
+    <aside className={`flex flex-col [scrollbar-width:none] [&::-webkit-scrollbar]:hidden items-center gap-3 pt-3 w-72 overflow-auto h-screen bg-black/30 backdrop-blur-sm text-white border-r border-white/10  ${className}`}>
       <div className=" flex items-center gap-3">
         <Image src={logo} alt="Hotflix" width={100} height={100} />
       </div>

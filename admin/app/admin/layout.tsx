@@ -8,9 +8,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
+    <div className=" md:flex justify-between min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
       {/* Desktop sidebar */}
-      <div className="hidden md:block">
+      <div className="hidden md:flex">
         <Sidebar />
       </div>
 
@@ -30,8 +30,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       )}
 
-      <main className="md:ml-72 ml-0 p-4 md:p-8 min-h-screen">
-        <div className="max-w-[1400px] mx-auto">{children}</div>
+      <main className=" ml-0 p-4 md:p-8 h-screen flex-1 overflow-y-auto">
+        <div className=" mx-auto">{children}</div>
       </main>
     </div>
   )

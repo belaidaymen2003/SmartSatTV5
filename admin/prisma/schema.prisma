@@ -13,183 +13,214 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 enum Role {
   ADMIN
   USER
 }
 
-enum Plan {
-  FREE
-  BASIC
-  PREMIUM
-  CINEMATIC
-}
+
 
 enum UserStatus {
   APPROVED
   BANNED
 }
-enum UserAuth {
-  CONNECTED
-  DISCONNECTED
-  
-}
 
-enum Visibility {
-  VISIBLE
-  HIDDEN
-}
-
-enum ContentType {
+enum ItemCategory {
   MOVIE
-  SERIES
+  TV_SERIES
   ANIME
   CARTOON
   LIVE_TV
   STREAMING
-  GAMING
 }
 
-enum Quality {
-  SD
-  HD
-  FULLHD
-  FOUR_K
-  EIGHT_K
+enum ItemStatus {
+  VISIBLE
+  HIDDEN
 }
 
 enum CommentStatus {
   PENDING
   APPROVED
-  REJECTED
+  HIDDEN
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  HIDDEN
+}
+
+enum Quality {
+  SD
+  HD
+  FullHD
+  K4
+}
+enum Auth {
+CONNECTED 
+DISCONNECTED
 }
 
 model User {
-  id             Int           @id @default(autoincrement())
-  name           String
-  email          String        @unique
-  username       String        @unique
-  passwordHash   String
-  role           Role          @default(USER)
-  status         UserStatus    @default(APPROVED)
-  credits        Int           @default(0)
-  commentsCount  Int           @default(0)
-  reviewsCount   Int           @default(0)
-  Auth           UserAuth     @default(DISCONNECTED)
-  reviews        Review[]
-  comments       Comment[]
-  purchases      Purchase[]
-  watchlist      Watchlist[]
-  creditEvents   CreditEvent[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id           Int                   @id @default(autoincrement())
+  email        String                @unique
+  username     String                @unique
+  name         String
+  passwordHash String
+  role         Role                  @default(USER)
+  credits      Int                   @default(0)
+  status       UserStatus            @default(APPROVED)
+  auth         Auth                  @default(DISCONNECTED) //
+  authLastAt  DateTime?             
+  comments     Comment[]
+  reviews      Review[]
+  beinJobs     BeInSportActivation[] @relation("BeInByUser")
+  subscriptions Subscription[]
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@index([role, status])
 }
 
-model Content {
-  id             Int           @id @default(autoincrement())
-  title          String
-  type           ContentType
-  status         Visibility    @default(VISIBLE)
-  rating         Float         @default(0)
-  views          Int           @default(0)
-  price          Int?          // credits
-  mediaUrl       String?
-  imageUrl       String?
-  images         String[]      // Postgres array
-  trailerUrl     String?
-  quality        Quality?
-  description    String?
-  longDescription String?
-  genres         String[]      // Postgres array
-  runtime        String?
-  premiereDate   DateTime?
-  coverUrl       String?
-  backgroundUrl  String?
-  country        String?
-  director       String?
-  actors         String[]      // Postgres array
-  seasons        Int?
-  episodes       Int?
-  reviews        Review[]
-  comments       Comment[]
-  purchases      Purchase[]
-  watchlistedBy  Watchlist[]
+model CatalogItem {
+  id            Int          @id @default(autoincrement())
+  title         String
+  rating        Float        @default(0)
+  category      ItemCategory
+  views         Int          @default(0)
+  status        ItemStatus   @default(VISIBLE)
+  mediaUrl      String?
+  quality       Quality?
+  age           String?
+  description   String?
+  runtime       String?
+  premiereDate  DateTime?
+  coverUrl      String?
+  backgroundUrl String?
+  country       String?
+  director      String?
+  actors        String[] // simple string array; switch to relation if needed
+  comments      Comment[]
+  reviews       Review[]
+  genres        ItemGenre[]
+  tags          ItemTag[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-
-  @@index([type, status])
+  @@index([category, status])
   @@index([title])
 }
 
-model Review {
-  id        String   @id @default(cuid())
-  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  contentId Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
-  rating    Int      // 1..5
-  text      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Genre {
+  id        Int         @id @default(autoincrement())
+  name      String      @unique
+  items     ItemGenre[]
+  createdAt DateTime    @default(now())
+}
 
-  @@unique([contentId, userId])
-  @@index([userId])
+model ItemGenre {
+  itemId  Int
+  genreId Int
+  item    CatalogItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  genre   Genre       @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, genreId])
+}
+
+model Tag {
+  id        Int       @id @default(autoincrement())
+  // Examples: "GIFT CARDS", "beIN SPORTS", "Goosat", "CARTE INTERNET"
+  name      String    @unique
+  items     ItemTag[]
+  createdAt DateTime  @default(now())
+}
+
+model ItemTag {
+  itemId Int
+  tagId  Int
+  item   CatalogItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  tag    Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, tagId])
 }
 
 model Comment {
-  id        String        @id @default(cuid())
-  content   Content       @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  contentId Int
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
-  text      String
-  status    CommentStatus @default(PENDING)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id         Int           @id @default(autoincrement())
+  itemId     Int
+  userId     Int?
+  authorName String
+  content    String
+  status     CommentStatus @default(PENDING)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
 
-  @@index([contentId, status])
-  @@index([userId])
+  item CatalogItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user User?       @relation(fields: [userId], references: [id])
+
+  @@index([itemId, status])
 }
 
-model Purchase {
-  id         String   @id @default(cuid())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     Int
-  content    Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  contentId  Int
-  pricePaid  Int
+model Review {
+  id         Int          @id @default(autoincrement())
+  itemId     Int
+  userId     Int?
+  authorName String
+  rating     Float
+  content    String?
+  status     ReviewStatus @default(PENDING)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  item CatalogItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user User?       @relation(fields: [userId], references: [id])
+
+  @@index([itemId, status])
+}
+
+model Settings {
+  id                 Int      @id @default(1)
+  brandName          String   @default("HOTFLIX")
+  accentColor        String   @default("#f97316")
+  allowRegistrations Boolean  @default(true)
+  maintenanceMode    Boolean  @default(false)
+  updatedAt          DateTime @updatedAt
+}
+
+model BeInSportActivation {
+  id         Int      @id @default(autoincrement())
+  code       String   @unique
+  customerId String
+  months     Int
+  createdBy  Int?
   createdAt  DateTime @default(now())
 
-  @@unique([userId, contentId])
-  @@index([contentId])
+  author User? @relation("BeInByUser", fields: [createdBy], references: [id])
 }
 
-model Watchlist {
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
-  content   Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  contentId Int
-  addedAt   DateTime @default(now())
 
-  @@id([userId, contentId])
-  @@index([contentId])
+model IPTVChannel {
+  id          Int              @id @default(autoincrement())
+  name        String
+  url         String            // Stream URL (.m3u8, etc.)
+  logo        String?
+  description String?
+  category    String?
+  cost        Float             // Price of subscription
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime         @updatedAt
+  subscriptions Subscription[]  // All users who subscribed
 }
 
-enum CreditOp {
-  ADD
-  SET
-  RESET
-}
-
-model CreditEvent {
-  id        String   @id @default(cuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
-  op        CreditOp
-  amount    Int      // For SET, the new balance; for ADD, delta; for RESET, 0
-  note      String?
-  createdAt DateTime @default(now())
-
-  @@index([userId, createdAt])
+model Subscription {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  duration    Int      // Duration in months
+  channel     IPTVChannel  @relation(fields: [channelId], references: [id])
+  channelId   Int
+  startDate   DateTime @default(now())   // When subscription starts
+  endDate     DateTime                   // When subscription expires
+  status      String   @default("active") // active, expired, cancelled
 }

@@ -12,7 +12,7 @@ export async function POST(req: Request, res: Response) {
     function isEmail(input: string): boolean {
         return input.includes('@');
     }
-    const user = await prisma.user.findFirst({
+    const user = await prisma.user.findUnique({
       where: {
         ...(isEmail(emailorusername)
           ? { email: emailorusername }
@@ -21,6 +21,7 @@ export async function POST(req: Request, res: Response) {
         role: 'ADMIN',
       }
     });
+    console.log(user);
     return NextResponse.json(user ? { message: 'Login successful', user } : { message: 'Invalid credentials' }, { status: user ? 200 : 401 });
   
 

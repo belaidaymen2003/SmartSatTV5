@@ -71,7 +71,7 @@ export default function CategoryPage({ params }: Props) {
     const qs = new URLSearchParams()
     if (map.category) qs.set('category', map.category)
     if (map.genre) qs.set('genre', map.genre)
-    router.push(`/admin/catalog/add?${qs.toString()}`)
+    router.push(`/admin/categories/${params.slug}/add?${qs.toString()}`)
   }
 
   return (
@@ -91,57 +91,8 @@ export default function CategoryPage({ params }: Props) {
         </div>
       </div>
 
-      <div className="bg-black/20 backdrop-blur-sm rounded-xl border border-white/10">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-white/60 border-b border-white/10">
-                <th className="px-4 py-3 text-left">ID</th>
-                <th className="px-4 py-3 text-left">Title</th>
-                <th className="px-4 py-3 text-left">Rating</th>
-                <th className="px-4 py-3 text-left">Category</th>
-                <th className="px-4 py-3 text-left">Views</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-left">Created</th>
-                <th className="px-4 py-3 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-b border-white/5 hover:bg-white/5">
-                  <td className="px-4 py-3 text-white/70">{row.id}</td>
-                  <td className="px-4 py-3 text-white hover:underline cursor-pointer" onClick={() => setActive(row)}>{row.title}</td>
-                  <td className="px-4 py-3 text-yellow-400 font-medium flex items-center gap-1"><Star className="w-3 h-3" />{row.rating.toFixed(1)}</td>
-                  <td className="px-4 py-3 text-white/80">{row.category}</td>
-                  <td className="px-4 py-3 text-white/80">{new Intl.NumberFormat('en-US').format(row.views)}</td>
-                  <td className="px-4 py-3">
-                    <button onClick={() => toggleStatus(row.id)} className={`px-2.5 py-1 rounded-full text-xs font-medium border ${row.status === 'Visible' ? 'text-green-400 border-green-500/40 bg-green-500/10' : 'text-white/70 border-white/20 bg-white/5'}`}>{row.status}</button>
-                  </td>
-                  <td className="px-4 py-3 text-white/60">{formatDate(row.createdAt)}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => setActive(row)} className="p-2 rounded-md bg-white/5 hover:bg-white/10" aria-label="Preview"><Eye className="w-4 h-4 text-white" /></button>
-                      <button onClick={() => router.push('/admin/catalog/add')} className="p-2 rounded-md bg-white/5 hover:bg-white/10" aria-label="Edit"><Edit2 className="w-4 h-4 text-blue-300" /></button>
-                      <button onClick={() => toggleStatus(row.id)} className="p-2 rounded-md bg-white/5 hover:bg-white/10" aria-label="Toggle">{row.status === 'Visible' ? <Lock className="w-4 h-4 text-yellow-300" /> : <Unlock className="w-4 h-4 text-green-300" />}</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {rows.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-white/60">No items yet. Click "Add Item" to create one.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        <div className="flex items-center justify-between p-4 border-t border-white/10">
-          <div className="text-xs text-white/50">{start + 1}��{Math.min(start + pageSize, total)} of {total}</div>
-          <div className="flex items-center gap-2">
-            <button disabled={page===1} onClick={() => setPage((p)=>p-1)} className="px-3 py-1.5 rounded-md border border-white/10 text-white/70 disabled:opacity-50">Prev</button>
-            <button disabled={start + pageSize >= total} onClick={() => setPage((p)=>p+1)} className="px-3 py-1.5 rounded-md border border-white/10 text-white/70 disabled:opacity-50">Next</button>
-          </div>
-        </div>
+      <div className="bg-black/20 h-96 backdrop-blur-sm rounded-xl border border-white/10">
+    
       </div>
 
       {active && (
