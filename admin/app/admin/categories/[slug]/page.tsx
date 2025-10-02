@@ -2,11 +2,12 @@
 
 type Props = { params: { slug: string } }
 
-import { useEffect, useMemo, useState } from 'react'
-import { Search, Plus, Edit2, Trash2, X, Image as ImageIcon } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Search, Plus, Edit2, Trash2, X, Image as ImageIcon, Play } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import AdminStore from '../../../../lib/adminStore'
 import type { CatalogItem } from '../../../../lib/adminStore'
+import Hls from 'hls.js'
 
 // Server model shape for IPTVChannel
 type IPTVChannel = {
@@ -43,6 +44,69 @@ const categoryMapping = (slug: string): { category?: CatalogItem['category']; ge
   return {}
 }
 
+function HlsPlayer({ url }: { url: string }) {
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setError(null)
+    const el = videoRef.current
+    if (!el) return
+
+    if (el.canPlayType('application/vnd.apple.mpegurl')) {
+      el.src = url
+      el.play().catch(()=>{})
+      return
+    }
+
+    if (Hls.isSupported()) {
+      const hls = new Hls({ enableWorker: true })
+      hls.loadSource(url)
+      hls.attachMedia(el)
+      hls.on(Hls.Events.ERROR, (_, data) => {
+        if (data.fatal) setError(data.details || 'Playback error')
+      })
+      el.play().catch(()=>{})
+      return () => { hls.destroy() }
+    } else {
+      setError('HLS is not supported in this browser')
+    }
+  }, [url])
+
+  return (
+    <div className="w-full">
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+      <video ref={videoRef} controls playsInline className="w-full rounded-lg bg-black" />
+      {error && <div className="mt-2 text-red-400 text-sm">{error}</div>}
+    </div>
+  )
+}
+
+function PreviewModal({ channel, onClose }: { channel: IPTVChannel, onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={onClose}>
+      <div className="w-full max-w-3xl bg-black/40 border border-white/10 rounded-xl p-5 backdrop-blur-md" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            {channel.logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={channel.logo} alt={channel.name} className="h-8 w-8 rounded bg-white/10 object-contain" />
+            ) : (
+              <div className="h-8 w-8 rounded bg-white/10 grid place-items-center"><ImageIcon className="w-4 h-4 text-white/40" /></div>
+            )}
+            <div>
+              <div className="text-white font-semibold">{channel.name}</div>
+              <div className="text-white/60 text-xs">{channel.category || 'Live TV'}</div>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1 rounded hover:bg-white/10"><X className="w-5 h-5 text-white/70" /></button>
+        </div>
+        <HlsPlayer url={channel.url} />
+      </div>
+    </div>
+  )
+}
+
 export default function CategoryPage({ params }: Props) {
   const router = useRouter()
   const title = titleFromSlug(params.slug)
@@ -61,6 +125,7 @@ export default function CategoryPage({ params }: Props) {
   const [loading, setLoading] = useState(false)
   const [edit, setEdit] = useState<IPTVChannel | null>(null)
   const [form, setForm] = useState({ name: '', url: '', logo: '', description: '', category: 'Live TV', cost: 0 })
+  const [preview, setPreview] = useState<IPTVChannel | null>(null)
 
   const fetchChannels = async () => {
     setLoading(true)
@@ -198,7 +263,7 @@ export default function CategoryPage({ params }: Props) {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {rows.map((ch) => (
-                <div key={ch.id} className="bg-black/30 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-colors">
+                <div key={ch.id} className="bg-black/30 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-colors cursor-pointer" onClick={() => setPreview(ch)}>
                   <div className="flex items-start gap-3">
                     <div className="h-12 w-12 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden">
                       {ch.logo ? (
@@ -216,7 +281,10 @@ export default function CategoryPage({ params }: Props) {
                   </div>
                   <div className="flex items-center justify-between mt-3">
                     <div className="text-xs text-white/60">{currency(ch.cost)}</div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2" onClick={(e)=>e.stopPropagation()}>
+                      <button onClick={() => setPreview(ch)} className="inline-flex items-center gap-1 px-2 py-1 rounded border border-white/10 hover:bg-white/10 text-white/80">
+                        <Play className="w-4 h-4" /> Preview
+                      </button>
                       <button onClick={() => openEdit(ch)} className="inline-flex items-center gap-1 px-2 py-1 rounded border border-white/10 hover:bg-white/10 text-white/80">
                         <Edit2 className="w-4 h-4" /> Edit
                       </button>
@@ -285,8 +353,12 @@ export default function CategoryPage({ params }: Props) {
         </div>
       )}
 
+      {preview && (
+        <PreviewModal channel={preview} onClose={() => setPreview(null)} />
+      )}
+
       {active && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onClick={() => setActive(null)}>
+        <div className="fixed inset-0 z-40 grid place-items-center bg-black/60 p-4" onClick={() => setActive(null)}>
           <div className="w-full max-w-md bg-black/30 border border-white/10 rounded-xl p-5 backdrop-blur-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-white font-semibold">{active.title}</h3>
