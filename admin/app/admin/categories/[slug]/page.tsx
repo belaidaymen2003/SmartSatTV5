@@ -65,8 +65,13 @@ export default function CategoryPage({ params }: Props) {
   const fetchChannels = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/admin/categories/category?slug=iptv`)
-      const data = await res.json()
+      const res = await fetch(`/api/admin/categories/category?slug=iptv`, { cache: 'no-store' })
+      let data: any = {}
+      try {
+        data = await res.clone().json()
+      } catch {
+        // ignore parse errors (e.g., HTML or already-read body)
+      }
       setChannels(Array.isArray(data.channels) ? data.channels : [])
     } finally {
       setLoading(false)
