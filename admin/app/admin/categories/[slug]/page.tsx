@@ -3,7 +3,7 @@
 type Props = { params: { slug: string } }
 
 import { useEffect, useMemo, useState } from 'react'
-import { Search, Plus, Edit2, Trash2, X } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, X, Image as ImageIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import AdminStore from '../../../../lib/adminStore'
 import type { CatalogItem } from '../../../../lib/adminStore'
@@ -49,7 +49,7 @@ export default function CategoryPage({ params }: Props) {
   const [query, setQuery] = useState('')
   const [version, setVersion] = useState(0)
   const [active, setActive] = useState<CatalogItem | null>(null)
-  const pageSize = 10
+  const pageSize = 12
   const [page, setPage] = useState(1)
 
   // Catalog (non-IPTV) local store subscription
@@ -67,7 +67,7 @@ export default function CategoryPage({ params }: Props) {
     try {
       const res = await fetch(`/api/admin/categories/category?slug=iptv`)
       const data = await res.json()
-      setChannels(data.channels || [])
+      setChannels(Array.isArray(data.channels) ? data.channels : [])
     } finally {
       setLoading(false)
     }
@@ -94,8 +94,7 @@ export default function CategoryPage({ params }: Props) {
 
   const filteredChannels = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const rows = channels.filter((c) => !q || c.name.toLowerCase().includes(q))
-    return rows
+    return channels.filter((c) => !q || c.name.toLowerCase().includes(q))
   }, [channels, query])
 
   const total = params.slug === 'iptv' ? filteredChannels.length : filteredCatalog.length
@@ -140,6 +139,34 @@ export default function CategoryPage({ params }: Props) {
     fetchChannels()
   }
 
+  const replaceLogo = async (file: File) => {
+    if (!edit) return
+    const fd = new FormData()
+    fd.append('channelId', String(edit.id))
+    fd.append('file', file)
+    fd.append('fileName', file.name)
+    if (edit.logo) fd.append('oldLogoUrl', edit.logo)
+    await fetch('/api/admin/categories/upload', { method: 'PUT', body: fd })
+      .then((r)=>r.json())
+      .then((d)=>{
+        if (d.logoUrl) setForm((f)=>({ ...f, logo: d.logoUrl }))
+      })
+    fetchChannels()
+  }
+
+  const deleteLogo = async () => {
+    if (!edit) return
+    await fetch('/api/admin/categories/upload', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channelId: edit.id, logoUrl: edit.logo || undefined })
+    })
+    setForm((f)=>({ ...f, logo: '' }))
+    fetchChannels()
+  }
+
+  const currency = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0)
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -158,51 +185,47 @@ export default function CategoryPage({ params }: Props) {
       </div>
 
       {params.slug === 'iptv' ? (
-        <div className="bg-black/20 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-white/80">
-              <thead className="bg-white/5 text-white/70">
-                <tr>
-                  <th className="px-4 py-3 text-left">Logo</th>
-                  <th className="px-4 py-3 text-left">Name</th>
-                  <th className="px-4 py-3 text-left">Category</th>
-                  <th className="px-4 py-3 text-left">Cost</th>
-                  <th className="px-4 py-3 text-left">URL</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td className="px-4 py-6" colSpan={6}>Loading...</td></tr>
-                ) : rows.length === 0 ? (
-                  <tr><td className="px-4 py-6" colSpan={6}>No channels</td></tr>
-                ) : (
-                  rows.map((ch) => (
-                    <tr key={ch.id} className="border-t border-white/10">
-                      <td className="px-4 py-3">
-                        {ch.logo ? <img src={ch.logo} alt={ch.name} className="h-8 w-8 rounded object-contain bg-white/10" /> : <div className="h-8 w-8 rounded bg-white/10" />}
-                      </td>
-                      <td className="px-4 py-3">{ch.name}</td>
-                      <td className="px-4 py-3">{ch.category || '-'}</td>
-                      <td className="px-4 py-3">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(ch.cost || 0)}</td>
-                      <td className="px-4 py-3 max-w-xs truncate" title={ch.url}>{ch.url}</td>
-                      <td className="px-4 py-3 text-right">
-                        <button onClick={() => openEdit(ch)} className="inline-flex items-center gap-1 px-2 py-1 rounded border border-white/10 hover:bg-white/10 mr-2">
-                          <Edit2 className="w-4 h-4" /> Edit
-                        </button>
-                        <button onClick={() => removeChannel(ch.id)} className="inline-flex items-center gap-1 px-2 py-1 rounded border border-red-500/30 text-red-400 hover:bg-red-500/10">
-                          <Trash2 className="w-4 h-4" /> Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className="space-y-4">
+          {loading ? (
+            <div className="text-white/60">Loading...</div>
+          ) : rows.length === 0 ? (
+            <div className="text-white/60">No channels</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {rows.map((ch) => (
+                <div key={ch.id} className="bg-black/30 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden">
+                      {ch.logo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={ch.logo} alt={ch.name} className="h-full w-full object-contain" />
+                      ) : (
+                        <ImageIcon className="w-6 h-6 text-white/40" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-white font-medium truncate">{ch.name}</div>
+                      <div className="text-xs text-white/60 mt-0.5">{ch.category || 'Live TV'}</div>
+                      {ch.description && <div className="text-xs text-white/50 mt-1 line-clamp-2">{ch.description}</div>}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="text-xs text-white/60">{currency(ch.cost)}</div>
+                    <div className="flex gap-2">
+                      <button onClick={() => openEdit(ch)} className="inline-flex items-center gap-1 px-2 py-1 rounded border border-white/10 hover:bg-white/10 text-white/80">
+                        <Edit2 className="w-4 h-4" /> Edit
+                      </button>
+                      <button onClick={() => removeChannel(ch.id)} className="inline-flex items-center gap-1 px-2 py-1 rounded border border-red-500/30 text-red-400 hover:bg-red-500/10">
+                        <Trash2 className="w-4 h-4" /> Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
-          {/* Pagination */}
-          <div className="flex items-center justify-between p-3 border-t border-white/10">
+          <div className="flex items-center justify-between p-1">
             <div className="text-white/60 text-xs">Page {page} of {Math.max(1, Math.ceil(total / pageSize))}</div>
             <div className="flex gap-2">
               <button disabled={page <= 1} onClick={() => setPage((p)=>Math.max(1, p-1))} className="px-3 py-1 rounded border border-white/10 disabled:opacity-50">Prev</button>
@@ -225,10 +248,29 @@ export default function CategoryPage({ params }: Props) {
             <div className="grid grid-cols-1 gap-3">
               <label className="text-sm text-white/70">Name<input className="mt-1 w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white" value={form.name} onChange={(e)=>setForm({...form, name: e.target.value})} /></label>
               <label className="text-sm text-white/70">URL<input className="mt-1 w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white" value={form.url} onChange={(e)=>setForm({...form, url: e.target.value})} /></label>
-              <label className="text-sm text-white/70">Logo URL<input className="mt-1 w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white" value={form.logo} onChange={(e)=>setForm({...form, logo: e.target.value})} /></label>
               <label className="text-sm text-white/70">Description<textarea className="mt-1 w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white" value={form.description} onChange={(e)=>setForm({...form, description: e.target.value})} /></label>
-              <label className="text-sm text-white/70">Category<input className="mt-1 w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white" value={form.category} onChange={(e)=>setForm({...form, category: e.target.value})} /></label>
-              <label className="text-sm text-white/70">Cost<input type="number" step="0.01" className="mt-1 w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white" value={form.cost} onChange={(e)=>setForm({...form, cost: Number(e.target.value)})} /></label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="text-sm text-white/70">Category<input className="mt-1 w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white" value={form.category} onChange={(e)=>setForm({...form, category: e.target.value})} /></label>
+                <label className="text-sm text-white/70">Cost<input type="number" step="0.01" className="mt-1 w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white" value={form.cost} onChange={(e)=>setForm({...form, cost: Number(e.target.value)})} /></label>
+              </div>
+              <div className="text-sm text-white/70">
+                Logo
+                <div className="mt-2 flex items-center gap-3">
+                  {form.logo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={form.logo} alt={form.name} className="h-10 w-10 rounded bg-white/10 object-contain" />
+                  ) : (
+                    <div className="h-10 w-10 rounded bg-white/10 grid place-items-center"><ImageIcon className="w-5 h-5 text-white/40" /></div>
+                  )}
+                  <label className="px-3 py-1.5 border border-white/10 rounded cursor-pointer hover:bg-white/10 text-white/80">
+                    Replace
+                    <input type="file" accept="image/*" className="hidden" onChange={(e)=>{ const f=e.target.files?.[0]; if(f) replaceLogo(f) }} />
+                  </label>
+                  {form.logo && (
+                    <button type="button" onClick={deleteLogo} className="px-3 py-1.5 border border-red-500/30 text-red-400 rounded hover:bg-red-500/10">Remove</button>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <button onClick={() => setEdit(null)} className="px-4 py-2 rounded border border-white/20 text-white/80 hover:bg-white/10">Cancel</button>
