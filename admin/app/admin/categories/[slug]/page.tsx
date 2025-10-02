@@ -1,3 +1,5 @@
+'use client'
+
 type Props = { params: { slug: string } }
 
 import { useEffect, useMemo, useState } from 'react'
