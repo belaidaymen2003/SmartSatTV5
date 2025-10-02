@@ -15,9 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
      const { searchParams } = new URL(request.url);
      const id = searchParams.get("id");
      const slug = searchParams.get("slug");
-     const categoryParam = searchParams.get("category");
-     const q = searchParams.get("q") || undefined;
-
+console.log({ id, slug,});
      if (id) {
        const channelId = Number(id);
        if (!Number.isFinite(channelId)) {
@@ -28,13 +26,9 @@ import { NextRequest, NextResponse } from "next/server";
        return NextResponse.json({ channel });
      }
 
-     const category = categoryParam || categoryFromSlug(slug || undefined);
+    
 
      const channels = await prisma.iPTVChannel.findMany({
-       where: {
-         ...(category ? { category } : {}),
-         ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
-       },
        orderBy: { createdAt: "desc" },
      });
      return NextResponse.json({ channels });
