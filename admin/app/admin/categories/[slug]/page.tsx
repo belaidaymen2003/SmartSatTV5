@@ -33,6 +33,7 @@ const categoryMapping = (slug: string): { category?: CatalogItem['category']; ge
 export default function CategoryPage({ params }: Props) {
   const router = useRouter()
   const title = titleFromSlug(params.slug)
+  useEffect(() => { if (params.slug === 'iptv') router.replace('/admin/categories/iptv') }, [params.slug, router])
   const [query, setQuery] = useState('')
   const [version, setVersion] = useState(0)
   const [active, setActive] = useState<CatalogItem | null>(null)
