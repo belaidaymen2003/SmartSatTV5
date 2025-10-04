@@ -42,7 +42,7 @@ export default function AdminLoginPage() {
         playsInline
         className="absolute inset-0 opacity-50 w-full h-full object-cover z-0"
       >
-        <source src="/loginbg.mp4" type="video/mp4" />
+        <source src="https://ik.imagekit.io/belaidaymen444/projects/SmartSatTV/Assets/Silky_Blue_4K_Motion_Background_Loop.mp4?updatedAt=1759431314017" type="video/mp4" />
       </video>
       {/* Overlay for darkening effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 opacity-80 z-10" />
