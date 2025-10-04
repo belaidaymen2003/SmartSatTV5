@@ -1,8 +1,8 @@
- import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
  import ImageKit from "imagekit";
 
- import { PrismaClient  } from "@/lib/generated/prisma/client";
-    const prisma = new PrismaClient();
+ import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
 
 export async function POST(request: NextRequest) {
