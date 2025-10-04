@@ -40,7 +40,14 @@ async function resolveFileId({ fileId, logoUrl }: { fileId?: string | null; logo
     name,
     limit: 1,
   });
-  return found && found.length ? found[0].fileId : null;
+    if (found && found.length) {
+    const file = found[0];
+    if ('fileId' in file) {
+      return file.fileId;
+    }
+  }
+
+  return null;
 }
 
 export async function POST(request: NextRequest) {
@@ -125,4 +132,5 @@ export async function DELETE(request: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
 }
