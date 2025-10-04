@@ -71,7 +71,7 @@ export default function CategoryPage({ params }: Props) {
     const qs = new URLSearchParams()
     if (map.category) qs.set('category', map.category)
     if (map.genre) qs.set('genre', map.genre)
-    router.push(`/admin/categories/${params.slug}/add?${qs.toString()}`)
+    router.push(`/admin/categories/add/${params.slug}?${qs.toString()}`)
   }
 
   return (
