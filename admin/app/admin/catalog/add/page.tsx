@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Calendar, Film, Image as ImageIcon, Link as LinkIcon, Upload, Video } from 'lucide-react'
 import AdminStore from '../../../../lib/adminStore'
 
+export const dynamic = 'force-dynamic'
+
 const qualities = ['SD', 'HD', 'FullHD', '4K'] as const
 const categories = ['Movie', 'TV Series', 'Anime', 'Cartoon', 'Live TV', 'Streaming'] as const
 
