@@ -88,10 +88,6 @@ export default function Sidebar({ className = '' }: { className?: string }) {
             <div className="mt-1 pl-6 flex flex-col gap-1">
               <Link href="/admin/categories/iptv" className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-white/10 text-sm">IPTV</Link>
               <Link href="/admin/categories/gift-cards" className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-white/10 text-sm">GIFT CARDS</Link>
-              <Link href="/admin/categories/bein-sports" className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-white/10 text-sm">beIN SPORTS</Link>
-              <Link href="/admin/categories/goosat" className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-white/10 text-sm">Goosat</Link>
-              <Link href="/admin/categories/carte-internet" className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-white/10 text-sm">CARTE INTERNET</Link>
-              <Link href="/admin/categories/streaming" className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-white/10 text-sm">Streaming</Link>
             </div>
           )}
         </div>
