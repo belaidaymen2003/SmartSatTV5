@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Search, Plus, Edit2, Trash2, X, Image as ImageIcon, Play } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, X, Image as ImageIcon, Play, Coins } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Hls from 'hls.js'
 
@@ -189,12 +189,10 @@ export default function IPTVPage() {
                     {ch.description && <div className="text-xs text-white/50 mt-1 line-clamp-2">{ch.description}</div>}
                   </div>
                 </div>
-                <div className="flex items-center justify-between mt-3">
-                  <div className="text-xs text-white/60">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(ch.cost || 0)}</div>
+                <div className="flex overflow-hidden items-center justify-between mt-3">
+                  <div className=" flex text-xs text-white/60 gap-[2px]"> <Coins className="w-4 h-4 text-yellow-400" />{ch.cost || 0}</div>
                   <div className="flex gap-2" onClick={(e)=>e.stopPropagation()}>
-                    <button onClick={() => setPreview(ch)} className="inline-flex items-center gap-1 px-2 py-1 rounded border border-white/10 hover:bg-white/10 text-white/80">
-                      <Play className="w-4 h-4" /> Preview
-                    </button>
+        
                     <button onClick={() => openEdit(ch)} className="inline-flex items-center gap-1 px-2 py-1 rounded border border-white/10 hover:bg-white/10 text-white/80">
                       <Edit2 className="w-4 h-4" /> Edit
                     </button>
