@@ -152,7 +152,7 @@ export default function IPTVPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-white">IPTV <span className="text-white/50 text-sm ml-2" suppressHydrationWarning>{total} Total</span></h1>
-        <button onClick={()=>router.push('/admin/categories/iptv/add')} className="px-4 py-2 rounded-lg border border-orange-500 text-orange-400 hover:bg-orange-500/10 transition-colors flex items-center gap-2">
+        <button onClick={()=>router.push('/admin/categories/add/iptv')} className="px-4 py-2 rounded-lg border border-orange-500 text-orange-400 hover:bg-orange-500/10 transition-colors flex items-center gap-2">
           <Plus className="w-4 h-4" />
           ADD ITEM
         </button>

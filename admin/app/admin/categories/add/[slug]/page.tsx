@@ -46,17 +46,16 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
     
     const urlLogo = URL.createObjectURL(file);
     setLocalUrl(urlLogo);
-        const reader = new FileReader();
+    const reader = new FileReader();
   
-  formData.append("file", file);
-  formData.append("fileName", file.name);
+    formData.append("file", file);
+    formData.append("fileName", file.name);
   };
-console.log(formData.get("file"));
+  console.log(formData.get("file"));
   async function submitData() {
     setLoading(true);
     try {
       if (params.slug === 'gift-cards') {
-        // Upload image if present
         let uploaded: any = null
         if (formData.get('file')) {
           uploaded = await fetch('/api/admin/gift-cards/upload', { method: 'POST', body: formData }).then(r=>r.json())
@@ -79,32 +78,9 @@ console.log(formData.get("file"));
     }
   }
   const videoRef = useRef(null);
-/*const channelUrl = 'https://ik.imagekit.io/belaidaymen444/primary_160.m3u8';
-  useEffect(() => {
-    if (!videoRef.current) return;
-
-    // If browser supports HLS natively
-    if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
-      videoRef.current.src = channelUrl;
-    } else if (Hls.isSupported()) {
-      const hls = new Hls();
-      hls.loadSource(channelUrl);
-      hls.attachMedia(videoRef.current);
-      return () => {
-        hls.destroy();
-      }
-    }
-  }, [channelUrl]);*/
 
   return (
     <div className="space-y-6">
-       {/*<div>
-         <video ref={videoRef} controls width="100%" height="auto" />
-       </div>
-       <div className="flex items-center justify-between">
-         <h1 className="text-2xl font-semibold text-white">Add Item</h1>
-       </div>*/}
-
       <div className="bg-black/20 backdrop-blur-sm rounded-xl border border-white/10 p-6">
         {params.slug === 'gift-cards' ? (
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -163,7 +139,7 @@ console.log(formData.get("file"));
                 <ImageIcon className="w-4 h-4 text-white/60" />
 
                 <label className="ml-2 cursor-pointer inline-flex items-center gap-1 text-white/70">
-                                 <img src={localurl} alt="" className=" h-10 w-14 object-contain" />
+                  <img src={localurl} alt="" className=" h-10 w-14 object-contain" />
                   <Upload className="w-4 h-4" />
                   <span>Browse</span>
                   <input
