@@ -12,7 +12,7 @@ const categories = ['Movie', 'TV Series', 'Anime', 'Cartoon', 'Live TV', 'Stream
 
 export default function AddItemPage() {
   const router = useRouter()
-  const search = useSearchParams()
+
   const [title, setTitle] = useState('')
   const [quality, setQuality] = useState<typeof qualities[number]>('FullHD')
   const [age, setAge] = useState('')
@@ -29,12 +29,12 @@ export default function AddItemPage() {
   const [mediaUrl, setMediaUrl] = useState('')
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
+  /*useEffect(() => {
     const cat = search.get('category') as typeof categories[number] | null
     const gen = search.get('genre')
     if (cat && categories.includes(cat)) setCategory(cat)
     if (gen) setGenre(gen)
-  }, [search])
+  }, [search])*/
 
   const onFile = (file?: File) => {
     if (!file) return
