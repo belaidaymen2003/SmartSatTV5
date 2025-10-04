@@ -33,7 +33,13 @@ async function resolveFileId({ fileId, url }: { fileId?: string | null, url?: st
   const name = fileNameFromUrl(url);
   if (!name) return null;
   const list = await imagekit.listFiles({ path: FOLDER.replace(/^\//, ""), name, limit: 1 });
-  return list && list.length ? list[0].fileId : null;
+     if (list && list.length) {
+    const file = list[0];
+    if ('fileId' in file) {
+      return file.fileId;
+    }
+  }
+  return null;
 }
 
 export async function POST(request: NextRequest) {
