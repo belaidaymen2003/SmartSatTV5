@@ -280,11 +280,9 @@ export default function CategoryPage({ params }: Props) {
                     </div>
                   </div>
                   <div className="flex items-center justify-between mt-3">
-                    <div className="text-xs text-white/60">{currency(ch.cost)}</div>
+                    <div className="text-xs text-white/60">{ch.cost}</div>
                     <div className="flex gap-2" onClick={(e)=>e.stopPropagation()}>
-                      <button onClick={() => setPreview(ch)} className="inline-flex items-center gap-1 px-2 py-1 rounded border border-white/10 hover:bg-white/10 text-white/80">
-                        <Play className="w-4 h-4" /> Preview
-                      </button>
+          
                       <button onClick={() => openEdit(ch)} className="inline-flex items-center gap-1 px-2 py-1 rounded border border-white/10 hover:bg-white/10 text-white/80">
                         <Edit2 className="w-4 h-4" /> Edit
                       </button>
