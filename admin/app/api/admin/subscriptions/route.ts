@@ -1,4 +1,5 @@
 import { PrismaClient } from '@/lib/generated/prisma'
+import { PrismaClient } from '@/lib/generated/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
 const prisma = new PrismaClient()
