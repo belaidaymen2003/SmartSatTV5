@@ -71,24 +71,11 @@ export async function POST(request: NextRequest) {
     const end = new Date(start)
     end.setMonth(end.getMonth() + duration)
 
-    // Code generation and uniqueness loop
-    let code = providedCode && String(providedCode).trim() ? String(providedCode).trim() : randomCode(10)
-    // ensure unique code
-    let tries = 0
-    while (tries < 5) {
-      const existing = await prisma.subscription.findUnique({ where: { code } as any }).catch(()=>null)
-      if (!existing) break
-      code = randomCode(10)
-      tries++
-    }
-
     const created = await prisma.subscription.create({
       data: {
         userId,
         channelId: channelIdNum,
         duration,
-        credit: typeof credit === 'number' ? credit : Number(credit ?? 0),
-        code,
         startDate: start,
         endDate: end,
         status: 'ACTIVE',
