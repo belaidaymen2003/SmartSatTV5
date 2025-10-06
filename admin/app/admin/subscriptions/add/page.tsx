@@ -33,6 +33,8 @@ export default function AddSubscriptionPage() {
       }
       if (form.userId) payload.userId = Number(form.userId)
       else if (form.userEmail) { payload.userEmail = form.userEmail; payload.userName = form.userName }
+      if (typeof form.credit !== 'undefined') payload.credit = Number(form.credit)
+      if (form.code) payload.code = form.code
 
       const res = await fetch('/api/admin/subscriptions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       const data = await res.json()
