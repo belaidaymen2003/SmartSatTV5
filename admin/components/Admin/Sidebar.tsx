@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
-import { Home, Grid, Users, MessageCircle, Star, Settings, ArrowLeft, LogOut, User, Globe, Zap, PlayCircle, ChevronDown, Folder } from 'lucide-react'
+import { Home, Grid, Users, MessageCircle, Star, Settings, ArrowLeft, LogOut, User, Globe, Zap, PlayCircle, ChevronDown, Folder, Coins } from 'lucide-react'
 import logo from '../../public/Logo2.png'
 
 export default function Sidebar({ className = '' }: { className?: string }) {
