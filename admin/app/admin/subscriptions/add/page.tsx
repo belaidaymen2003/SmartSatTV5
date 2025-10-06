@@ -30,11 +30,9 @@ export default function AddSubscriptionPage() {
       const payload: any = {
         channelId: Number(form.channelId),
         durationMonths: Number(form.durationMonths),
-        credit: Number(form.credit || 0),
       }
       if (form.userId) payload.userId = Number(form.userId)
       else if (form.userEmail) { payload.userEmail = form.userEmail; payload.userName = form.userName }
-      if (form.code) payload.code = form.code
 
       const res = await fetch('/api/admin/subscriptions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       const data = await res.json()
