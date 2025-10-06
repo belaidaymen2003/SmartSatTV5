@@ -62,6 +62,17 @@ enum Auth {
 CONNECTED 
 DISCONNECTED
 }
+enum DurationPlan {
+  ONE_MONTH
+  SIX_MONTHS
+  ONE_YEAR
+}
+
+ enum  Status {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+ }
 
 model User {
   id           Int                   @id @default(autoincrement())
@@ -216,11 +227,14 @@ model IPTVChannel {
 model Subscription {
   id          Int      @id @default(autoincrement())
   user        User     @relation(fields: [userId], references: [id])
-  userId      Int
-  duration    Int      // Duration in months
+  userId      Int    // Duration in months
+  credit       Float  
+  code        String   @unique
   channel     IPTVChannel  @relation(fields: [channelId], references: [id])
   channelId   Int
+  duration    DurationPlan 
   startDate   DateTime @default(now())   // When subscription starts
   endDate     DateTime                   // When subscription expires
-  status      String   @default("active") // active, expired, cancelled
+  status      Status   @default(ACTIVE) // active, expired, cancelled
+  updatedAt   DateTime @updatedAt
 }
