@@ -93,6 +93,20 @@ export default function AddSubscriptionPage() {
             </label>
           </div>
 
+          <div className="md:col-span-4">
+            <label className="text-sm text-white/70">Price / Credit
+              <input type="number" value={form.credit} onChange={(e)=>setForm({...form, credit: Number(e.target.value)})} className="mt-1 w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white" />
+            </label>
+          </div>
+
+          <div className="md:col-span-4">
+            <label className="text-sm text-white/70">Code (optional)
+              <div className="mt-1 flex gap-2">
+                <input value={form.code} onChange={(e)=>setForm({...form, code: e.target.value})} className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white" />
+                <button type="button" onClick={generateCode} className="px-3 py-2 rounded border border-white/10">Generate</button>
+              </div>
+            </label>
+          </div>
 
           <div className="md:col-span-12">
             <div className="flex items-center justify-end gap-2 mt-4">
