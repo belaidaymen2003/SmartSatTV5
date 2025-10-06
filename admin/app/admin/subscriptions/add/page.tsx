@@ -7,7 +7,7 @@ export default function AddSubscriptionPage() {
   const [channels, setChannels] = useState<any[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
-  const [form, setForm] = useState({ userId: '', userEmail: '', userName: '', channelId: '', durationMonths: 1 })
+  const [form, setForm] = useState({ userId: '', userEmail: '', userName: '', channelId: '', durationMonths: 1, credit: 0, code: '' })
   const [message, setMessage] = useState<string | null>(null)
 
   useEffect(() => {
