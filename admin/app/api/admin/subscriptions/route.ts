@@ -45,8 +45,8 @@ export async function POST(request: NextRequest) {
     const channelIdNum = Number(channelId)
     if (!Number.isFinite(channelIdNum)) return NextResponse.json({ error: 'Invalid channelId' }, { status: 400 })
 
-    const duration = Number(durationMonths ?? 1)
-    if (!Number.isFinite(duration) || duration <= 0) return NextResponse.json({ error: 'Invalid durationMonths' }, { status: 400 })
+    const durationNum = Number(durationMonths ?? 1)
+    if (!Number.isFinite(durationNum) || durationNum <= 0) return NextResponse.json({ error: 'Invalid durationMonths' }, { status: 400 })
 
     // Resolve or create user
     let userId: number | null = null
@@ -70,13 +70,34 @@ export async function POST(request: NextRequest) {
     // Compute dates
     const start = providedStart ? new Date(providedStart) : new Date()
     const end = new Date(start)
-    end.setMonth(end.getMonth() + duration)
+
+    // map numeric months to DurationPlan enum
+    function monthsToDurationPlan(n: number) {
+      if (n <= 1) return 'ONE_MONTH'
+      if (n <= 3) return 'THREE_MONTHS'
+      if (n <= 6) return 'SIX_MONTHS'
+      return 'TWELVE_MONTHS'
+    }
+    const durationEnum = monthsToDurationPlan(durationNum)
+    end.setMonth(end.getMonth() + durationNum)
+
+    // handle code uniqueness
+    let code = providedCode && String(providedCode).trim() ? String(providedCode).trim() : randomCode(10)
+    let tries = 0
+    while (tries < 5) {
+      const existing = await prisma.subscription.findUnique({ where: { code } as any }).catch(() => null)
+      if (!existing) break
+      code = randomCode(10)
+      tries++
+    }
 
     const created = await prisma.subscription.create({
       data: {
         userId,
         channelId: channelIdNum,
-        duration,
+        credit: typeof credit === 'number' ? credit : Number(credit ?? 0),
+        code,
+        duration: durationEnum as any,
         startDate: start,
         endDate: end,
         status: 'ACTIVE',
