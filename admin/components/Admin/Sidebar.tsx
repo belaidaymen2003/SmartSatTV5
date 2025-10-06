@@ -41,6 +41,10 @@ export default function Sidebar({ className = '' }: { className?: string }) {
             <Users className="w-4 h-4" />
             <span className="text-sm">USERS</span>
           </Link>
+          <Link href="/admin/subscriptions/add" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/10 transition-colors">
+            <Coins className="w-4 h-4" />
+            <span className="text-sm">SUBSCRIPTIONS</span>
+          </Link>
           <Link href="/admin/comments" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/10 transition-colors">
             <MessageCircle className="w-4 h-4" />
             <span className="text-sm">COMMENTS</span>
