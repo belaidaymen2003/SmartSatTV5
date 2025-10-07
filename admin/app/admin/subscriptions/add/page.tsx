@@ -122,7 +122,7 @@ export default function AddSubscriptionPage() {
 
           <div className="md:col-span-12">
             <div className="flex items-center justify-end gap-2 mt-4">
-              <button onClick={submit} disabled={loading || (!form.channelId) || (!form.userId && !form.userEmail)} className="px-4 py-2 rounded border border-orange-500 text-orange-400 hover:bg-orange-500/10 disabled:opacity-60">{loading ? 'Creating...' : 'Create Subscription'}</button>
+              <button onClick={submit} disabled={loading || (!form.channelId)} className="px-4 py-2 rounded border border-orange-500 text-orange-400 hover:bg-orange-500/10 disabled:opacity-60">{loading ? 'Creating...' : 'Create Subscription'}</button>
             </div>
             {message && <div className="mt-3 text-sm text-white/80">{message}</div>}
           </div>
