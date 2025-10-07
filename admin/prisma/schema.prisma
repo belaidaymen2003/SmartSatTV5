@@ -215,11 +215,9 @@ model BeInSportActivation {
 model IPTVChannel {
   id          Int              @id @default(autoincrement())
   name        String           // Stream URL (.m3u8, etc.)
-  url         String
   logo        String?
   description String?
-  category    String?          // Price of subscription
-  cost        Float             
+  category    String?          // Price of subscription            
   createdAt   DateTime          @default(now())
   updatedAt   DateTime         @updatedAt
   subscriptions Subscription[]  // All users who subscribed
