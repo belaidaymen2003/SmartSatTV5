@@ -258,7 +258,7 @@ function PreviewModal({
             href={`/admin/categories/add/iptv/subscription/${channel.id}`}
             rel="noreferrer"
           >
-            {previewsubscription(channelId)}
+            <SubscriptionTable channelId={channelId} />
             <button className="inline-flex items-center gap-1 px-2 py-1 rounded border border-white/10 hover:bg-white/10 text-white/80">
               <Edit2 className="w-4 h-4" /> Add Subscription
             </button>
