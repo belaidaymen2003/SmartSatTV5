@@ -25,7 +25,7 @@ export default function CategorySubscriptionPage() {
 
   const fetchSubscriptions = async () => {
     if (!channelId) return
-    const res = await fetch(`/api/admin/subscriptions?channelId=${channelId}`)
+    const res = await fetch(`/api/admin/categories/category/subscription?channelId=${channelId}`)
     const data = await res.json()
     setSubs(Array.isArray(data.subscriptions) ? data.subscriptions : [])
   }
