@@ -103,12 +103,12 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
               value={data.title}
               onChange={(e) => setData({ ...data, title: e.target.value.trim() })}
               placeholder="Title"
-              className="md:col-span-8 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30"
+              className="col-span-12 md:col-span-8 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30"
             />
             <select
               value={data.category}
               onChange={(e) => setData({ ...data, category: e.target.value.trim() })}
-              className="md:col-span-2 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white"
+              className="col-span-12 sm:col-span-2 md:col-span-2 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white"
             >
               {categories.map((q) => (
                 <option key={q}>{q}</option>
