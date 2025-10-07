@@ -8,7 +8,7 @@ export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<AdminSettings>(AdminStore.getSettings())
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => AdminStore.subscribe(() => setSettings(AdminStore.getSettings())), [])
+  useEffect(() => {AdminStore.subscribe(() => setSettings(AdminStore.getSettings()))}, [])
 
   const save = () => { setSaving(true); AdminStore.updateSettings(settings); setTimeout(()=>setSaving(false), 300) }
 
