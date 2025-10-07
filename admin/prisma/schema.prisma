@@ -221,29 +221,13 @@ model IPTVChannel {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime         @updatedAt
   subscriptions Subscription[]  // All users who subscribed
-  plans        SubscriptionPlan[] // Available plans for this channel
 }
 
-model SubscriptionPlan {
-  id          Int          @id @default(autoincrement())
-  channel     IPTVChannel  @relation(fields: [channelId], references: [id])
-  channelId   Int
-  name        String
-  description String?
-  duration    DurationPlan
-  credit      Float        @default(0)
-  code        String       @unique
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  subscriptions Subscription[]
-}
 
 model Subscription {
   id        Int          @id @default(autoincrement())
   user      User?         @relation(fields: [userId], references: [id])
-  userId    Int
-  plan      SubscriptionPlan? @relation(fields: [planId], references: [id])
-  planId    Int?
+  userId    Int?
   credit    Float        @default(0)
   code      String?      @unique
   channel   IPTVChannel  @relation(fields: [channelId], references: [id])
