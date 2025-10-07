@@ -280,13 +280,12 @@ function PreviewModal({
     } catch (e) { headers.Authorization = `Bearer email:admin@local` }
 
     const res = await fetch(`/api/admin/categories/category/subscription?channelId=${channelId}`, { headers })
-    const data = await res.text(); // read the response body as text
-    const subscriptions = JSON.parse(data);
+    const data = await res.json();
     if(!data){
       setSipinner1(false)
       return
     }
-    setSubs( subscriptions.subscriptions );
+    setSubs( data.subscriptions );
     setSipinner1(false);
   };
   const fetchChannels = async () => {
