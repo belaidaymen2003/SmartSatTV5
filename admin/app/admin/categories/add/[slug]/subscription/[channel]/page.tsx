@@ -54,7 +54,7 @@ export default function CategorySubscriptionPage() {
 
   const removeSub = async (idOrCode: number | string) => {
     const q = typeof idOrCode === 'number' ? `id=${idOrCode}` : `code=${encodeURIComponent(String(idOrCode))}`
-    await fetch(`/api/admin/subscriptions?${q}`, { method: 'DELETE' })
+    await fetch(`/api/admin/categories/category/subscription?${q}`, { method: 'DELETE' })
     fetchSubscriptions()
   }
 
