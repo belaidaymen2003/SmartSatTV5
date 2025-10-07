@@ -64,9 +64,8 @@ enum Auth {
 // Subscription duration plans
 enum DurationPlan {
   ONE_MONTH
-  THREE_MONTHS
   SIX_MONTHS
-  TWELVE_MONTHS
+  ONE_YEAR
 }
 
 // Subscription status
@@ -232,7 +231,7 @@ model Subscription {
   code      String?      @unique
   channel   IPTVChannel  @relation(fields: [channelId], references: [id])
   channelId Int
-  duration  DurationPlan
+  duration  DurationPlan @default(ONE_MONTH)
   startDate DateTime     @default(now())
   endDate   DateTime
   status    Status       @default(ACTIVE)
