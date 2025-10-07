@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import ImageKit from "imagekit";
 import { PrismaClient } from "@/lib/generated/prisma";
+import { readDb, writeDb } from '@/lib/mockDb'
 
-const imagekit = new ImageKit({
-  publicKey: process.env.IMAGEKIT_PUBLIC_KEY!,
-  privateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
-  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT!,
-});
+const hasImagekit = Boolean(process.env.IMAGEKIT_PRIVATE_KEY && process.env.IMAGEKIT_PUBLIC_KEY && process.env.IMAGEKIT_URL_ENDPOINT)
+let imagekit: any = null
+if (hasImagekit) {
+  imagekit = new ImageKit({
+    publicKey: process.env.IMAGEKIT_PUBLIC_KEY!,
+    privateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
+    urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT!,
+  });
+}
 
 const prisma = new PrismaClient();
 const FOLDER = "/projects/SmartSatTV/channelsIPTV/IPTVLogo";
@@ -33,6 +38,7 @@ function fileNameFromUrl(url: string): string | null {
 async function resolveFileId({ fileId, logoUrl }: { fileId?: string | null; logoUrl?: string | null }) {
   if (fileId) return fileId;
   if (!logoUrl) return null;
+  if (!hasImagekit) return null;
   const name = fileNameFromUrl(logoUrl);
   if (!name) return null;
   const found = await imagekit.listFiles({
@@ -57,17 +63,25 @@ export async function POST(request: NextRequest) {
     const fileName = (formData.get("fileName") as string) || `logo_${Date.now()}.png`;
 
     const fileData = await toBase64FromFormFile(file);
-    const uploadResponse = await imagekit.upload({
-      file: fileData,
-      fileName,
-      folder: FOLDER,
-    });
+    if (hasImagekit && imagekit) {
+      const uploadResponse = await imagekit.upload({
+        file: fileData,
+        fileName,
+        folder: FOLDER,
+      });
 
-    return NextResponse.json({
-      message: "Uploaded successfully",
-      logoUrl: uploadResponse.url,
-      fileId: uploadResponse.fileId,
-    });
+      return NextResponse.json({
+        message: "Uploaded successfully",
+        logoUrl: uploadResponse.url,
+        fileId: uploadResponse.fileId,
+      });
+    }
+
+    // fallback: return data URL and store minimal record in mock DB
+    const dataUrl = `data:image/png;base64,${fileData}`
+    const db = readDb()
+    // no tracking of files for now
+    return NextResponse.json({ message: 'Uploaded (mock)', logoUrl: dataUrl, fileId: null })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -86,19 +100,38 @@ export async function PUT(request: NextRequest) {
     const oldLogoUrl = (formData.get("oldLogoUrl") as string) || undefined;
 
     const fileData = await toBase64FromFormFile(file);
-    const uploadResponse = await imagekit.upload({ file: fileData, fileName, folder: FOLDER });
+    if (hasImagekit && imagekit) {
+      const uploadResponse = await imagekit.upload({ file: fileData, fileName, folder: FOLDER });
 
-    const updated = await prisma.iPTVChannel.update({
-      where: { id: channelId },
-      data: { logo: uploadResponse.url },
-    });
+      const updated = await prisma.iPTVChannel.update({
+        where: { id: channelId },
+        data: { logo: uploadResponse.url },
+      });
 
+      try {
+        const resolvedId = await resolveFileId({ fileId: oldFileId, logoUrl: oldLogoUrl || updated.logo || undefined });
+        if (resolvedId) await imagekit.deleteFile(resolvedId);
+      } catch {}
+
+      return NextResponse.json({ message: "Logo updated", logoUrl: uploadResponse.url, fileId: uploadResponse.fileId, channel: updated });
+    }
+
+    // fallback: store data URL in mock DB and update channel record in mock
+    const dataUrl = `data:image/png;base64,${fileData}`
     try {
-      const resolvedId = await resolveFileId({ fileId: oldFileId, logoUrl: oldLogoUrl || updated.logo || undefined });
-      if (resolvedId) await imagekit.deleteFile(resolvedId);
-    } catch {}
-
-    return NextResponse.json({ message: "Logo updated", logoUrl: uploadResponse.url, fileId: uploadResponse.fileId, channel: updated });
+      const updated = await prisma.iPTVChannel.update({ where: { id: channelId }, data: { logo: dataUrl } })
+      return NextResponse.json({ message: 'Logo updated (db)', logoUrl: dataUrl, fileId: null, channel: updated })
+    } catch (err) {
+      const db = readDb()
+      const i = db.channels.findIndex(c => c.id === channelId)
+      if (i !== -1) {
+        db.channels[i].logo = dataUrl
+        db.channels[i].updatedAt = new Date().toISOString()
+        writeDb(db)
+        return NextResponse.json({ message: 'Logo updated (mock)', logoUrl: dataUrl, fileId: null, channel: db.channels[i] })
+      }
+      return NextResponse.json({ error: 'Channel not found' }, { status: 404 })
+    }
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -118,17 +151,44 @@ export async function DELETE(request: NextRequest) {
 
     let channelLogoUrl: string | null = null;
     if (Number.isFinite(channelId)) {
-      const channel = await prisma.iPTVChannel.findUnique({ where: { id: channelId } });
-      channelLogoUrl = channel?.logo || null;
+      try {
+        const channel = await prisma.iPTVChannel.findUnique({ where: { id: channelId } });
+        channelLogoUrl = channel?.logo || null;
+      } catch (_) {
+        const db = readDb()
+        const ch = db.channels.find(c => c.id === channelId)
+        channelLogoUrl = ch?.logo || null
+      }
     }
-    const resolvedId = await resolveFileId({ fileId: toDeleteId || undefined, logoUrl: logoUrl || channelLogoUrl || undefined });
-    if (resolvedId) await imagekit.deleteFile(resolvedId);
 
-    if (Number.isFinite(channelId)) {
-      await prisma.iPTVChannel.update({ where: { id: channelId }, data: { logo: null } });
+    if (hasImagekit && imagekit) {
+      const resolvedId = await resolveFileId({ fileId: toDeleteId || undefined, logoUrl: logoUrl || channelLogoUrl || undefined });
+      if (resolvedId) await imagekit.deleteFile(resolvedId);
+
+      if (Number.isFinite(channelId)) {
+        await prisma.iPTVChannel.update({ where: { id: channelId }, data: { logo: null } });
+      }
+
+      return NextResponse.json({ message: "Logo deleted" });
     }
 
-    return NextResponse.json({ message: "Logo deleted" });
+    // fallback mock delete
+    try {
+      if (Number.isFinite(channelId)) {
+        const updated = await prisma.iPTVChannel.update({ where: { id: channelId }, data: { logo: null } })
+        return NextResponse.json({ message: 'Logo deleted (db)' })
+      }
+    } catch (_) {
+      const db = readDb()
+      const i = db.channels.findIndex(c => c.id === channelId)
+      if (i !== -1) {
+        db.channels[i].logo = null
+        writeDb(db)
+        return NextResponse.json({ message: 'Logo deleted (mock)' })
+      }
+    }
+
+    return NextResponse.json({ message: 'Nothing deleted' })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

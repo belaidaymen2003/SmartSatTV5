@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
 import {
   Search,
   Plus,
@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Hls from "hls.js";
+import Spinner from "@/components/UI/Spinner";
 
 // IPTV model
 type IPTVChannel = {
@@ -26,63 +27,18 @@ type IPTVChannel = {
   updatedAt: string;
 };
 
-function PreviewModal({
-  channel,
-  onClose,
-}: {
-  channel: IPTVChannel;
-  onClose: () => void;
-}) {
-  return (
-    <div
-      className="fixed inset-0  z-50 grid place-items-center bg-black/70 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-3xl bg-black/40 border border-white/10 rounded-xl p-5 backdrop-blur-md"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            {channel.logo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={channel.logo}
-                alt={channel.name}
-                className="h-8 w-8 rounded bg-white/10 object-contain"
-              />
-            ) : (
-              <div className="h-8 w-8 rounded bg-white/10 grid place-items-center">
-                <ImageIcon className="w-4 h-4 text-white/40" />
-              </div>
-            )}
-            <div>
-              <div className="text-white font-semibold">{channel.name}</div>
-              <div className="text-white/60 text-xs">
-                {channel.category || "Live TV"}
-              </div>
-            </div>
-          </div>
-          <button onClick={onClose} className="p-1 rounded hover:bg-white/10">
-            <X className="w-5 h-5 text-white/70" />
-          </button>
-        </div>
-        <a href={`/admin/categories/add/iptv/subscription/${channel.id}`} target="_blank" rel="noreferrer">
-      <button className="inline-flex items-center gap-1 px-2 py-1 rounded border border-white/10 hover:bg-white/10 text-white/80">
-        <Edit2 className="w-4 h-4" /> Add Subscription
-      </button>
-      </a>
-      </div>
-    </div>
-  );
-}
-
 export default function IPTVPage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [channels, setChannels] = useState<IPTVChannel[]>([]);
   const [loading, setLoading] = useState(false);
   const [edit, setEdit] = useState<IPTVChannel | null>(null);
+  const [channelId, setChannelId] = useState<number | undefined>(undefined);
+  const [sipinner1, setSipinner1] = useState<boolean >(false);
+  const [subs, setSubs] = useState<
+    { id?: number; code: string; duration: number; credit: number }[]
+  >([{ id: undefined, code: "", duration: 1, credit: 0 }]);
+  const [message, setMessage] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
     url: "",
@@ -95,6 +51,243 @@ export default function IPTVPage() {
   const pageSize = 12;
   const [page, setPage] = useState(1);
 
+  const removeSub = async (idOrCode: number | string) => {
+    const q =
+      typeof idOrCode === "number"
+        ? `id=${idOrCode}`
+        : `code=${encodeURIComponent(String(idOrCode))}`;
+    await fetch(`/api/admin/categories/category/subscription?${q}`, {
+      method: "DELETE",
+    });
+    await fetchSubscriptions(idOrCode as number);
+  };
+  function previewsubscription(
+    channelId: number | null,
+    removeSub: (idOrCode: number | string) => void
+  ) {
+    if (!channelId) return null;
+
+    return (sipinner1 ? <Spinner size={6}/> :
+      (<div>
+        <h3 className="text-white font-semibold mb-2">Existing codes</h3>
+        {subs?.length === 0 ? (
+          <div className="text-white/60">No subscriptions</div>
+        ) : (
+          <div className="grid gap-2">
+            {subs.map((s) => (
+              <div
+                key={s.id || s.code}
+                className="flex items-center justify-between bg-black/30 border border-white/10 rounded px-3 py-2"
+              >
+                <div className="text-white">
+                  {s.code} —{" "}
+                  {s.duration || s.duration === 1
+                    ? `${s.duration}m`
+                    : s.duration}{" "}
+                  {s.credit ?? 0} credits
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => removeSub(s.id)}
+                    className="px-2 py-1 rounded border border-red-500/30 text-red-400"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>)
+    );
+  }
+  function SubscriptionTable({ channelId }: { channelId: number | null }) {
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editValues, setEditValues] = useState<{ code?: string; duration?: number; credit?: number }>({})
+
+  if (!channelId) return null
+  if (sipinner1) return <Spinner size={6} />
+
+  if (!subs || subs.length === 0) return <div className="text-white/60">No subscriptions</div>
+
+  const getAuthHeader = () => {
+    try {
+      const storedId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null
+      const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null
+      if (storedId) return { Authorization: `Bearer ${storedId}` }
+      if (storedEmail) return { Authorization: `Bearer email:${storedEmail}` }
+    } catch (e) {}
+    return { Authorization: `Bearer email:admin@local` }
+  }
+
+  const startEdit = (s: any) => {
+    setEditingId(s.id ?? null)
+    setEditValues({ code: s.code, duration: s.duration, credit: s.credit })
+  }
+
+  const cancelEdit = () => { setEditingId(null); setEditValues({}) }
+
+  const saveEdit = async (id: number) => {
+    const payload: any = { id }
+    if (typeof editValues.code === 'string') payload.code = editValues.code
+    if (typeof editValues.duration !== 'undefined') payload.durationMonths = Number(editValues.duration)
+    if (typeof editValues.credit !== 'undefined') payload.credit = Number(editValues.credit)
+    const res = await fetch('/api/admin/categories/category/subscription', { method: 'PUT', headers: { 'Content-Type': 'application/json', ...getAuthHeader() }, body: JSON.stringify(payload) })
+    if (res.ok) {
+      setEditingId(null)
+      fetchSubscriptions(channelId)
+    } else {
+      const d = await res.json()
+      alert(d?.error || 'Failed to update')
+    }
+  }
+
+  const removeSubWithAuth = async (idOrCode: number | string) => {
+    const q = typeof idOrCode === 'number' ? `id=${idOrCode}` : `code=${encodeURIComponent(String(idOrCode))}`
+    await fetch(`/api/admin/categories/category/subscription?${q}`, { method: 'DELETE', headers: { ...getAuthHeader() } })
+    fetchSubscriptions(channelId)
+  }
+
+  return (
+    <div className="overflow-auto">
+      <table className="min-w-full text-left border-collapse">
+        <thead>
+          <tr className="text-white/70 text-sm">
+            <th className="px-3 py-2">Code</th>
+            <th className="px-3 py-2">Duration</th>
+            <th className="px-3 py-2">Credits</th>
+            <th className="px-3 py-2">Status</th>
+            <th className="px-3 py-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {subs.map((s:any) => (
+            <tr key={s.id || s.code} className="bg-black/30 border border-white/10 rounded">
+              <td className="px-3 py-2 align-middle">
+                {editingId === s.id ? (
+                  <input value={editValues.code || ''} onChange={(e)=>setEditValues(ev=>({...ev, code: e.target.value}))} className="bg-transparent border border-white/10 rounded px-2 py-1 text-white" />
+                ) : (
+                  <div className="text-white">{s.code}</div>
+                )}
+              </td>
+              <td className="px-3 py-2 align-middle text-white/80">
+                {editingId === s.id ? (
+                  <select value={String(editValues.duration ?? s.duration)} onChange={(e)=>setEditValues(ev=>({...ev, duration: Number(e.target.value)}))} className="bg-transparent border border-white/10 rounded px-2 py-1 text-white">
+                    <option value={1}>1 month</option>
+                    <option value={3}>3 months</option>
+                    <option value={6}>6 months</option>
+                    <option value={12}>12 months</option>
+                  </select>
+                ) : (`${s.duration}m`)}
+              </td>
+              <td className="px-3 py-2 align-middle">
+                {editingId === s.id ? (
+                  <input type="number" value={String(editValues.credit ?? s.credit)} onChange={(e)=>setEditValues(ev=>({...ev, credit: Number(e.target.value)}))} className="bg-transparent border border-white/10 rounded px-2 py-1 text-white" />
+                ) : (
+                  <div className="text-white">{s.credit ?? 0}</div>
+                )}
+              </td>
+              <td className="px-3 py-2 text-white/60">{s.status || 'ACTIVE'}</td>
+              <td className="px-3 py-2">
+                <div className="flex gap-2">
+                  {editingId === s.id ? (
+                    <>
+                      <button onClick={()=>saveEdit(s.id)} className="px-2 py-1 rounded border border-green-500 text-green-400">Save</button>
+                      <button onClick={cancelEdit} className="px-2 py-1 rounded border border-white/10">Cancel</button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={()=>startEdit(s)} className="px-2 py-1 rounded border border-white/10">Edit</button>
+                      <button onClick={()=>removeSubWithAuth(s.id ?? s.code)} className="px-2 py-1 rounded border border-red-500/30 text-red-400">Delete</button>
+                    </>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function PreviewModal({
+    channelId,
+    channel,
+    onClose,
+  }: {
+    channel: IPTVChannel;
+    onClose: () => void;
+    channelId: number | null;
+  }) {
+    return (
+      <div
+        className="fixed inset-0  z-50 grid place-items-center bg-black/70 p-4"
+        onClick={onClose}
+      >
+        <div
+          className="w-full max-w-3xl bg-black/40 border border-white/10 rounded-xl p-5 backdrop-blur-md"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              {channel.logo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={channel.logo}
+                  alt={channel.name}
+                  className="h-8 w-8 rounded bg-white/10 object-contain"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded bg-white/10 grid place-items-center">
+                  <ImageIcon className="w-4 h-4 text-white/40" />
+                </div>
+              )}
+              <div>
+                <div className="text-white font-semibold">{channel.name}</div>
+                <div className="text-white/60 text-xs">
+                  {channel.category || "Live TV"}
+                </div>
+              </div>
+            </div>
+            <button onClick={onClose} className="p-1 rounded hover:bg-white/10">
+              <X className="w-5 h-5 text-white/70" />
+            </button>
+          </div>
+          <a
+            href={`/admin/categories/add/iptv/subscription/${channel.id}`}
+            rel="noreferrer"
+          >
+            <SubscriptionTable channelId={channelId} />
+            <button className="inline-flex items-center gap-1 px-2 py-1 rounded border border-white/10 hover:bg-white/10 text-white/80">
+              <Edit2 className="w-4 h-4" /> Add Subscription
+            </button>
+          </a>
+        </div>
+      </div>
+    );
+  }
+  const fetchSubscriptions = async (channelId: number) => {
+    if (!channelId) return;
+    setSipinner1(true);
+    let headers: any = {}
+    try {
+      const storedId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null
+      const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null
+      if (storedId) headers.Authorization = `Bearer ${storedId}`
+      else if (storedEmail) headers.Authorization = `Bearer email:${storedEmail}`
+      else headers.Authorization = `Bearer email:admin@local`
+    } catch (e) { headers.Authorization = `Bearer email:admin@local` }
+
+    const res = await fetch(`/api/admin/categories/category/subscription?channelId=${channelId}`, { headers })
+    const data = await res.json();
+    if(!data){
+      setSipinner1(false)
+      return
+    }
+    setSubs( data.subscriptions );
+    setSipinner1(false);
+  };
   const fetchChannels = async () => {
     setLoading(true);
     try {
@@ -111,6 +304,9 @@ export default function IPTVPage() {
     }
   };
 
+  useEffect(() => {
+    fetchSubscriptions(channelId);
+  }, [channelId]);
   useEffect(() => {
     fetchChannels();
   }, []);
@@ -228,7 +424,10 @@ export default function IPTVPage() {
               <div
                 key={ch.id}
                 className="bg-black/30 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-colors cursor-pointer"
-                onClick={() => setPreview(ch)}
+                onClick={() => {
+                  setPreview(ch);
+                  setChannelId(ch.id);
+                }}
               >
                 <div className="flex items-start gap-3">
                   <div className="h-12 w-12 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden">
@@ -311,7 +510,11 @@ export default function IPTVPage() {
       </div>
 
       {preview && (
-        <PreviewModal channel={preview} onClose={() => setPreview(null)} />
+        <PreviewModal
+          channelId={channelId}
+          channel={preview}
+          onClose={() => setPreview(null)}
+        />
       )}
 
       {edit && (
