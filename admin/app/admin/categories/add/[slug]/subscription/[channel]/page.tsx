@@ -12,23 +12,18 @@ export default function CategorySubscriptionPage() {
   const channelId = Number(params.channel)
   const [channel, setChannel] = useState<any | null>(null)
   const [rows, setRows] = useState<Row[]>([{ code: '', duration: 1, credit: 0 }])
-  const [subs, setSubs] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+
 
   useEffect(() => {
     if (!channelId || !Number.isFinite(channelId)) return
     fetch(`/api/admin/categories/category?id=${channelId}`).then(r=>r.json()).then((d)=>{ if (d.channel) setChannel(d.channel); else if (d.channel === undefined && d.id) setChannel(d) })
-    fetchSubscriptions()
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelId])
 
-  const fetchSubscriptions = async () => {
-    if (!channelId) return
-    const res = await fetch(`/api/admin/categories/category/subscription?channelId=${channelId}`)
-    const data = await res.json()
-    setSubs(Array.isArray(data.subscriptions) ? data.subscriptions : [])
-  }
+
 
   const addRow = () => setRows(r => [...r, { code: '', duration: 1, credit: 0 }])
   const removeRow = (i: number) => setRows(r => r.filter((_, idx) => idx !== i))
@@ -39,9 +34,10 @@ export default function CategorySubscriptionPage() {
     setLoading(true)
     setMessage(null)
     try {
-      for (const r of rows) {
-        if (!r.code.trim()) continue
-        const payload = { channelId, code: r.code.trim(), durationMonths: r.duration, credit: Number(r.credit || 0) }
+ 
+        
+        
+        const payloads = rows.map(r => ({ channelId, code: r.code.trim(), durationMonths: r.duration, credit: Number(r.credit || 0) })).filter(r => r.code)
         // Authorization header: try localStorage or fallback to mock admin email
         let authToken = ''
         try {
@@ -51,26 +47,21 @@ export default function CategorySubscriptionPage() {
           else if (storedEmail) authToken = `Bearer email:${storedEmail}`
           else authToken = `Bearer email:admin@local`
         } catch (e) { authToken = `Bearer email:admin@local` }
-        await fetch('/api/admin/categories/category/subscription', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: authToken }, body: JSON.stringify(payload) })
-      }
+        await fetch('/api/admin/categories/category/subscription', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: authToken }, body: JSON.stringify(payloads) })
+      
       setMessage('Subscription codes added')
       setRows([{ code: '', duration: 1, credit: 0 }])
-      fetchSubscriptions()
     } catch (err: any) {
       setMessage(String(err?.message || err))
     } finally { setLoading(false) }
   }
 
-  const removeSub = async (idOrCode: number | string) => {
-    const q = typeof idOrCode === 'number' ? `id=${idOrCode}` : `code=${encodeURIComponent(String(idOrCode))}`
-    await fetch(`/api/admin/categories/category/subscription?${q}`, { method: 'DELETE' })
-    fetchSubscriptions()
-  }
+
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-white">Add Subscription codes for Channel #{channelId} {channel?.name ? `- ${channel.name}` : ''}</h1>
+        <h1 className="text-2xl font-semibold text-white">Add Subscription codes for Channel  {channel?.name ? `- ${channel.name}` : ''}</h1>
       </div>
 
       <div className="bg-black/20 backdrop-blur-sm rounded-xl border border-white/10 p-6">
@@ -97,21 +88,7 @@ export default function CategorySubscriptionPage() {
 
           {message && <div className="text-sm text-white/70">{message}</div>}
 
-          <div>
-            <h3 className="text-white font-semibold mb-2">Existing codes</h3>
-            {subs.length === 0 ? <div className="text-white/60">No subscriptions</div> : (
-              <div className="grid gap-2">
-                {subs.map(s => (
-                  <div key={s.id || s.code} className="flex items-center justify-between bg-black/30 border border-white/10 rounded px-3 py-2">
-                    <div className="text-white">{s.code} — {s.duration || s.duration === 1 ? `${s.duration}m` : s.duration} ��� {s.credit ?? 0} credits</div>
-                    <div className="flex gap-2">
-                      <button onClick={()=>removeSub(s.id ?? s.code)} className="px-2 py-1 rounded border border-red-500/30 text-red-400">Delete</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+  
         </div>
       </div>
     </div>
