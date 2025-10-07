@@ -286,7 +286,7 @@ function PreviewModal({
       setSipinner1(false)
       return
     }
-    setSubs( data.subscriptions );
+    setSubs( subscriptions.subscriptions );
     setSipinner1(false);
   };
   const fetchChannels = async () => {
