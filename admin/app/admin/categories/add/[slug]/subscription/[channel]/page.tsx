@@ -42,7 +42,7 @@ export default function CategorySubscriptionPage() {
       for (const r of rows) {
         if (!r.code.trim()) continue
         const payload = { channelId, code: r.code.trim(), durationMonths: r.duration, credit: Number(r.credit || 0) }
-        await fetch('/api/admin/subscriptions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        await fetch('/api/admin/categories/category/subscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       }
       setMessage('Subscription codes added')
       setRows([{ code: '', duration: 1, credit: 0 }])
