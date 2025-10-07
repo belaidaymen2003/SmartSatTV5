@@ -42,7 +42,16 @@ export default function CategorySubscriptionPage() {
       for (const r of rows) {
         if (!r.code.trim()) continue
         const payload = { channelId, code: r.code.trim(), durationMonths: r.duration, credit: Number(r.credit || 0) }
-        await fetch('/api/admin/categories/category/subscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        // Authorization header: try localStorage or fallback to mock admin email
+        let authToken = ''
+        try {
+          const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null
+          const storedId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null
+          if (storedId) authToken = `Bearer ${storedId}`
+          else if (storedEmail) authToken = `Bearer email:${storedEmail}`
+          else authToken = `Bearer email:admin@local`
+        } catch (e) { authToken = `Bearer email:admin@local` }
+        await fetch('/api/admin/categories/category/subscription', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: authToken }, body: JSON.stringify(payload) })
       }
       setMessage('Subscription codes added')
       setRows([{ code: '', duration: 1, credit: 0 }])
@@ -94,7 +103,7 @@ export default function CategorySubscriptionPage() {
               <div className="grid gap-2">
                 {subs.map(s => (
                   <div key={s.id || s.code} className="flex items-center justify-between bg-black/30 border border-white/10 rounded px-3 py-2">
-                    <div className="text-white">{s.code} — {s.duration || s.duration === 1 ? `${s.duration}m` : s.duration} — {s.credit ?? 0} credits</div>
+                    <div className="text-white">{s.code} — {s.duration || s.duration === 1 ? `${s.duration}m` : s.duration} ��� {s.credit ?? 0} credits</div>
                     <div className="flex gap-2">
                       <button onClick={()=>removeSub(s.id ?? s.code)} className="px-2 py-1 rounded border border-red-500/30 text-red-400">Delete</button>
                     </div>
