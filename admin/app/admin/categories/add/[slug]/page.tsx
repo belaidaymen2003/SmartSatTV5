@@ -22,9 +22,8 @@ type Props = { params: { category: string } };
 type data = {
   title: string;
   category: string;
-  cost: number;
   description: string;
-  url: string;
+
 };
 const formData = new FormData();
 export default function CategoryPage({ params }: { params: { slug: string } }) {
@@ -34,9 +33,7 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
   const [data, setData] = useState<data>({
     title: "",
     category: "",
-    cost: 0,
     description: "",
-    url: "",
   });
   const [gift, setGift] = useState({ title: "", description: "" })
   const [loading, setLoading] = useState(false);
@@ -46,7 +43,7 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
     
     const urlLogo = URL.createObjectURL(file);
     setLocalUrl(urlLogo);
-    const reader = new FileReader();
+
   
     formData.append("file", file);
     formData.append("fileName", file.name);
@@ -117,29 +114,11 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
                 <option key={q}>{q}</option>
               ))}
             </select>
-            <input
-              type="number"
-              defaultValue={0}
-              min={0}
-              value={data.cost}
-              onChange={(e) => setData({ ...data, cost: Number(e.target.value) })}
-              placeholder="Cost"
-              className="md:col-span-2 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30"
-            />
-
-            <textarea
-              value={data.description}
-              onChange={(e) => setData({ ...data, description: e.target.value.trim() })}
-              placeholder="Description"
-              className="md:col-span-12 h-28 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30"
-            />
-
             <div className="md:col-span-12 flex w-full gap-3">
               <label className="flex items-center gap-2 bg-black/40 border border-white/10 rounded-lg px-3 py-2">
-                <ImageIcon className="w-4 h-4 text-white/60" />
-
-                <label className="ml-2 cursor-pointer inline-flex items-center gap-1 text-white/70">
-                  <img src={localurl} alt="" className=" h-10 w-14 object-contain" />
+                
+               <label className=" cursor-pointer inline-flex items-center gap-1 text-white/70">
+                  { localurl ? <img src={localurl} alt="" className=" h-10 w-14 object-contain" /> :<ImageIcon className="w-4 h-4 text-white/60" />}
                   <Upload className="w-4 h-4" />
                   <span>Browse</span>
                   <input
@@ -151,13 +130,17 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
                   />
                 </label>
               </label>
-              <label className="flex flex-1   items-center gap-2 bg-black/40 border border-white/10 rounded-lg px-3 py-2">
-                <Video className="w-8 h-8 text-white/60" />
-                <input
-                  value={data.url} onChange={(e) => setData({ ...data, url: e.target.value.trim() })} placeholder='Stream URL (HLS .m3u8, DASH .mpd)'  className="bg-transparent text-white placeholder-white/30 w-full outline-none"
-                />
-              </label>
+
             </div>
+
+
+
+            <textarea
+              value={data.description}
+              onChange={(e) => setData({ ...data, description: e.target.value.trim() })}
+              placeholder="Description"
+              className="md:col-span-12 h-28 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30"
+            />
           </div>
         )}
 
