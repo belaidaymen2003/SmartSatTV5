@@ -270,9 +270,16 @@ function PreviewModal({
   const fetchSubscriptions = async (channelId: number) => {
     if (!channelId) return;
     setSipinner1(true);
-    const res = await fetch(
-      `/api/admin/categories/category/subscription?channelId=${channelId}`
-    );
+    let headers: any = {}
+    try {
+      const storedId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null
+      const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null
+      if (storedId) headers.Authorization = `Bearer ${storedId}`
+      else if (storedEmail) headers.Authorization = `Bearer email:${storedEmail}`
+      else headers.Authorization = `Bearer email:admin@local`
+    } catch (e) { headers.Authorization = `Bearer email:admin@local` }
+
+    const res = await fetch(`/api/admin/categories/category/subscription?channelId=${channelId}`, { headers })
     const data = await res.json();
     if(!data){
       setSipinner1(false)
