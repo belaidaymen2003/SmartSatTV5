@@ -31,12 +31,22 @@ export default function AddSubscriptionPage() {
         channelId: Number(form.channelId),
         durationMonths: Number(form.durationMonths),
       }
-      if (form.userId) payload.userId = Number(form.userId)
-      else if (form.userEmail) { payload.userEmail = form.userEmail; payload.userName = form.userName }
       if (typeof form.credit !== 'undefined') payload.credit = Number(form.credit)
       if (form.code) payload.code = form.code
 
-      const res = await fetch('/api/admin/categories/category/subscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      // Build Authorization header: prefer explicit form inputs, fallback to localStorage, then to a mock admin email
+      let authToken = ''
+      try {
+        const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null
+        const storedId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null
+        if (form.userId) authToken = `Bearer ${form.userId}`
+        else if (form.userEmail) authToken = `Bearer email:${form.userEmail}`
+        else if (storedId) authToken = `Bearer ${storedId}`
+        else if (storedEmail) authToken = `Bearer email:${storedEmail}`
+        else authToken = `Bearer email:admin@local`
+      } catch (e) { authToken = `Bearer email:admin@local` }
+
+      const res = await fetch('/api/admin/categories/category/subscription', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: authToken }, body: JSON.stringify(payload) })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Failed')
       setMessage('Subscription created successfully')
