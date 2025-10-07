@@ -101,7 +101,117 @@ export default function IPTVPage() {
       </div>)
     );
   }
-  function PreviewModal({
+  function SubscriptionTable({ channelId }: { channelId: number | null }) {
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editValues, setEditValues] = useState<{ code?: string; duration?: number; credit?: number }>({})
+
+  if (!channelId) return null
+  if (sipinner1) return <Spinner size={6} />
+
+  if (!subs || subs.length === 0) return <div className="text-white/60">No subscriptions</div>
+
+  const getAuthHeader = () => {
+    try {
+      const storedId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null
+      const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null
+      if (storedId) return { Authorization: `Bearer ${storedId}` }
+      if (storedEmail) return { Authorization: `Bearer email:${storedEmail}` }
+    } catch (e) {}
+    return { Authorization: `Bearer email:admin@local` }
+  }
+
+  const startEdit = (s: any) => {
+    setEditingId(s.id ?? null)
+    setEditValues({ code: s.code, duration: s.duration, credit: s.credit })
+  }
+
+  const cancelEdit = () => { setEditingId(null); setEditValues({}) }
+
+  const saveEdit = async (id: number) => {
+    const payload: any = { id }
+    if (typeof editValues.code === 'string') payload.code = editValues.code
+    if (typeof editValues.duration !== 'undefined') payload.durationMonths = Number(editValues.duration)
+    if (typeof editValues.credit !== 'undefined') payload.credit = Number(editValues.credit)
+    const res = await fetch('/api/admin/categories/category/subscription', { method: 'PUT', headers: { 'Content-Type': 'application/json', ...getAuthHeader() }, body: JSON.stringify(payload) })
+    if (res.ok) {
+      setEditingId(null)
+      fetchSubscriptions(channelId)
+    } else {
+      const d = await res.json()
+      alert(d?.error || 'Failed to update')
+    }
+  }
+
+  const removeSubWithAuth = async (idOrCode: number | string) => {
+    const q = typeof idOrCode === 'number' ? `id=${idOrCode}` : `code=${encodeURIComponent(String(idOrCode))}`
+    await fetch(`/api/admin/categories/category/subscription?${q}`, { method: 'DELETE', headers: { ...getAuthHeader() } })
+    fetchSubscriptions(channelId)
+  }
+
+  return (
+    <div className="overflow-auto">
+      <table className="min-w-full text-left border-collapse">
+        <thead>
+          <tr className="text-white/70 text-sm">
+            <th className="px-3 py-2">Code</th>
+            <th className="px-3 py-2">Duration</th>
+            <th className="px-3 py-2">Credits</th>
+            <th className="px-3 py-2">Status</th>
+            <th className="px-3 py-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {subs.map((s:any) => (
+            <tr key={s.id || s.code} className="bg-black/30 border border-white/10 rounded">
+              <td className="px-3 py-2 align-middle">
+                {editingId === s.id ? (
+                  <input value={editValues.code || ''} onChange={(e)=>setEditValues(ev=>({...ev, code: e.target.value}))} className="bg-transparent border border-white/10 rounded px-2 py-1 text-white" />
+                ) : (
+                  <div className="text-white">{s.code}</div>
+                )}
+              </td>
+              <td className="px-3 py-2 align-middle text-white/80">
+                {editingId === s.id ? (
+                  <select value={String(editValues.duration ?? s.duration)} onChange={(e)=>setEditValues(ev=>({...ev, duration: Number(e.target.value)}))} className="bg-transparent border border-white/10 rounded px-2 py-1 text-white">
+                    <option value={1}>1 month</option>
+                    <option value={3}>3 months</option>
+                    <option value={6}>6 months</option>
+                    <option value={12}>12 months</option>
+                  </select>
+                ) : (`${s.duration}m`)}
+              </td>
+              <td className="px-3 py-2 align-middle">
+                {editingId === s.id ? (
+                  <input type="number" value={String(editValues.credit ?? s.credit)} onChange={(e)=>setEditValues(ev=>({...ev, credit: Number(e.target.value)}))} className="bg-transparent border border-white/10 rounded px-2 py-1 text-white" />
+                ) : (
+                  <div className="text-white">{s.credit ?? 0}</div>
+                )}
+              </td>
+              <td className="px-3 py-2 text-white/60">{s.status || 'ACTIVE'}</td>
+              <td className="px-3 py-2">
+                <div className="flex gap-2">
+                  {editingId === s.id ? (
+                    <>
+                      <button onClick={()=>saveEdit(s.id)} className="px-2 py-1 rounded border border-green-500 text-green-400">Save</button>
+                      <button onClick={cancelEdit} className="px-2 py-1 rounded border border-white/10">Cancel</button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={()=>startEdit(s)} className="px-2 py-1 rounded border border-white/10">Edit</button>
+                      <button onClick={()=>removeSubWithAuth(s.id ?? s.code)} className="px-2 py-1 rounded border border-red-500/30 text-red-400">Delete</button>
+                    </>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function PreviewModal({
     channelId,
     channel,
     onClose,
