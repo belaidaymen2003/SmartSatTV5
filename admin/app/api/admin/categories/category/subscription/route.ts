@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { userId: maybeUserId, userEmail, userName, channelId, durationMonths, credit, code: providedCode, startDate: providedStart } = body || {}
+    const { channelId, durationMonths, credit, code: providedCode, startDate: providedStart } = body || {}
     if (!channelId) return NextResponse.json({ error: 'channelId required' }, { status: 400 })
     const channelIdNum = Number(channelId)
     if (!Number.isFinite(channelIdNum)) return NextResponse.json({ error: 'Invalid channelId' }, { status: 400 })
@@ -92,46 +92,64 @@ export async function POST(request: NextRequest) {
       tries++
     }
 
-    // resolve/create user (try prisma then mock)
+    // resolve user from Authorization header (do NOT accept userId/userEmail from request body)
     let userId: number | null = null
-    if (maybeUserId) {
-      try {
-        const u = await prisma.user.findUnique({ where: { id: Number(maybeUserId) } })
-        if (!u) return NextResponse.json({ error: 'User not found' }, { status: 404 })
-        userId = u.id
-      } catch (_) {
-        userId = Number(maybeUserId)
-      }
-    } else if (userEmail) {
-      try {
-        const username = userName || userEmail.split('@')[0]
-        const up = await prisma.user.upsert({ where: { email: userEmail }, update: {}, create: { email: userEmail, username, name: userName || username, passwordHash: 'admin-created', credits: 0 } })
-        userId = up.id
-      } catch (_) {
-        const db = readDb()
-        let u = db.users.find(uu => uu.email === userEmail)
-        if (!u) {
-          const id = db.users.length ? Math.max(...db.users.map(x=>x.id)) + 1 : 1
-          u = { id, email: userEmail, username: userEmail.split('@')[0], name: userName || userEmail.split('@')[0] }
-          db.users.push(u)
-          writeDb(db)
+    let prismaAvailable = true
+
+    const authHeader = request.headers.get('authorization') || request.headers.get('Authorization') || ''
+    try {
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.slice(7).trim()
+        // token as numeric user id
+        if (/^\d+$/.test(token)) {
+          const id = Number(token)
+          const u = await prisma.user.findUnique({ where: { id } })
+          if (!u) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+          userId = u.id
+        } else if (token.startsWith('email:')) {
+          const email = token.slice(6)
+          const username = email.split('@')[0]
+          const up = await prisma.user.upsert({ where: { email }, update: {}, create: { email, username, name: username, passwordHash: 'admin-created', credits: 0 } })
+          userId = up.id
+        } else {
+          // unsupported token format - treat as unauthenticated
         }
-        userId = u.id
       }
+    } catch (err) {
+      // Prisma unavailable or error resolving user -- fallback to mock DB
+      prismaAvailable = false
+    }
+
+    if (prismaAvailable && userId === null) {
+      return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
     }
 
     try {
-      if (userId === null) return NextResponse.json({ error: 'userId or userEmail required for DB creation' }, { status: 400 })
-      const created = await prisma.subscription.create({ data: { userId, channelId: channelIdNum, credit: typeof credit === 'number' ? credit : Number(credit ?? 0), code, duration: durationEnum as any, startDate: start, endDate: end, status: 'ACTIVE' }, include: { user: true, channel: true } })
-      return NextResponse.json({ subscription: created }, { status: 201 })
-    } catch (_) {
+      if (prismaAvailable) {
+        const created = await prisma.subscription.create({ data: { userId: userId!, channelId: channelIdNum, credit: typeof credit === 'number' ? credit : Number(credit ?? 0), code, duration: durationEnum as any, startDate: start, endDate: end, status: 'ACTIVE' }, include: { user: true, channel: true } })
+        return NextResponse.json({ subscription: created }, { status: 201 })
+      }
+
+      // mock fallback when Prisma is not available
       const db = readDb()
+      let mockUserId = null
+      if (db.users && db.users.length) mockUserId = db.users[0].id
+      if (!mockUserId) {
+        const id = 1
+        db.users = db.users || []
+        db.users.push({ id, email: 'mock@local', username: 'mock', name: 'Mock User' })
+        mockUserId = id
+        writeDb(db)
+      }
+
       const id = db.subscriptions.length ? Math.max(...db.subscriptions.map(s=>s.id)) + 1 : 1
       const now = new Date().toISOString()
-      const sub = { id, userId: userId ?? 0, channelId: channelIdNum, credit: Number(credit ?? 0), code, duration: durationEnum, startDate: start.toISOString(), endDate: end.toISOString(), status: 'ACTIVE', updatedAt: now }
+      const sub = { id, userId: mockUserId, channelId: channelIdNum, credit: Number(credit ?? 0), code, duration: durationEnum, startDate: start.toISOString(), endDate: end.toISOString(), status: 'ACTIVE', updatedAt: now }
       db.subscriptions.unshift(sub as any)
       writeDb(db)
       return NextResponse.json({ subscription: sub, message: 'Created (mock)' }, { status: 201 })
+    } catch (err: any) {
+      return NextResponse.json({ error: err.message }, { status: 500 })
     }
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
