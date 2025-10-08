@@ -149,7 +149,6 @@ export default function CategorySubscriptionPage() {
                   <input value={editing.code} onChange={(e)=>setEditing({...editing, code: e.target.value})} className="sm:col-span-5 bg-black/40 border border-white/10 rounded px-2 py-1 text-white" />
                   <select value={String(editing.duration)} onChange={(e)=>setEditing({...editing, duration: Number(e.target.value)})} className="sm:col-span-3 bg-black/40 border border-white/10 rounded px-2 py-1 text-white">
                     <option value={1}>1 month</option>
-                    <option value={3}>3 months</option>
                     <option value={6}>6 months</option>
                     <option value={12}>12 months</option>
                   </select>
