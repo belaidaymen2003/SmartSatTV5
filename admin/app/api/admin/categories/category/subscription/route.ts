@@ -2,7 +2,12 @@ import { PrismaClient } from "@/lib/generated/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
-
+    function monthsToDurationPlan(n: number) {
+      if (n <= 1) return "ONE_MONTH";
+      if (n <= 6) return "SIX_MONTHS";
+      if (n <= 12) return "ONE_YEAR";
+      return undefined;
+    }
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -75,12 +80,7 @@ export async function POST(request: NextRequest) {
     // const end = new Date(start);
     // end.setMonth(end.getMonth() + durationNum);
 
-    function monthsToDurationPlan(n: number) {
-      if (n <= 1) return "ONE_MONTH";
-      if (n <= 6) return "SIX_MONTHS";
-      if (n <= 12) return "ONE_YEAR";
-      return undefined;
-    }
+
     // const durationEnum = monthsToDurationPlan(durationNum);
 
     // resolve user from Authorization header (do NOT accept userId/userEmail from request body)
@@ -116,6 +116,7 @@ export async function POST(request: NextRequest) {
             duration: durationEnum as any,
             startDate: start,
             endDate: end,
+            
             // userId: resolved userId, add if needed
           };
         }),
@@ -136,6 +137,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { id, code, credit, durationMonths, startDate, endDate, status } =
       body || {};
+       const durationEnum = monthsToDurationPlan(durationMonths);
     const subId = Number(id);
     if (!Number.isFinite(subId))
       return NextResponse.json({ error: "Invalid id" }, { status: 400 });
@@ -148,6 +150,7 @@ export async function PUT(request: NextRequest) {
         const end = new Date(startDate ? new Date(startDate) : new Date());
         end.setMonth(end.getMonth() + Number(durationMonths));
         updateData.endDate = end;
+        updateData.duration = durationEnum as any;
       }
       if (typeof status === "string") updateData.status = status;
 

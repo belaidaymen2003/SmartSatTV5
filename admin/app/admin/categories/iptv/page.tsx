@@ -18,200 +18,248 @@ import Spinner from "@/components/UI/Spinner";
 type IPTVChannel = {
   id: number;
   name: string;
-  url: string;
   logo: string | null;
   description: string | null;
   category: string | null;
-  cost: number;
   createdAt: string;
   updatedAt: string;
 };
-
+type logo = {
+  logourl: string;
+  logofile: File | null;
+};
 export default function IPTVPage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [channels, setChannels] = useState<IPTVChannel[]>([]);
   const [loading, setLoading] = useState(false);
   const [edit, setEdit] = useState<IPTVChannel | null>(null);
-  const [channelId, setChannelId] = useState<number | undefined>(undefined);
-  const [sipinner1, setSipinner1] = useState<boolean >(false);
+  const [channelId, setChannelId] = useState<number | null>(null);
+  const [sipinner1, setSipinner1] = useState<boolean>(false);
   const [subs, setSubs] = useState<
     { id?: number; code: string; duration: number; credit: number }[]
   >([{ id: undefined, code: "", duration: 1, credit: 0 }]);
   const [message, setMessage] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
-    url: "",
     logo: "",
     description: "",
     category: "Live TV",
-    cost: 0,
   });
   const [preview, setPreview] = useState<IPTVChannel | null>(null);
   const pageSize = 12;
   const [page, setPage] = useState(1);
+  const [logo, setLogo] = useState<logo>({ logourl: "", logofile: null });
 
-  const removeSub = async (idOrCode: number | string) => {
-    const q =
-      typeof idOrCode === "number"
-        ? `id=${idOrCode}`
-        : `code=${encodeURIComponent(String(idOrCode))}`;
-    await fetch(`/api/admin/categories/category/subscription?${q}`, {
-      method: "DELETE",
-    });
-    await fetchSubscriptions(idOrCode as number);
-  };
-  function previewsubscription(
-    channelId: number | null,
-    removeSub: (idOrCode: number | string) => void
-  ) {
+  function SubscriptionTable({ channelId }: { channelId: number | null }) {
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editValues, setEditValues] = useState<{
+      code?: string;
+      duration?: number;
+      credit?: number;
+    }>({});
+
+    const toMonths = (d: any) =>
+      typeof d === "number"
+        ? d
+        : d === "ONE_MONTH"
+        ? 1
+        : d === "SIX_MONTHS"
+        ? 6
+        : d === "ONE_YEAR"
+        ? 12
+        : 1;
+
     if (!channelId) return null;
+    if (sipinner1) return <Spinner size={6} />;
 
-    return (sipinner1 ? <Spinner size={6}/> :
-      (<div>
-        <h3 className="text-white font-semibold mb-2">Existing codes</h3>
-        {subs?.length === 0 ? (
-          <div className="text-white/60">No subscriptions</div>
-        ) : (
-          <div className="grid gap-2">
-            {subs.map((s) => (
-              <div
+    if (!subs || subs.length === 0)
+      return <div className="text-white/60">No subscriptions</div>;
+
+    const getAuthHeader = () => {
+      try {
+        const storedId =
+          typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+        const storedEmail =
+          typeof window !== "undefined"
+            ? localStorage.getItem("userEmail")
+            : null;
+        if (storedId) return { Authorization: `Bearer ${storedId}` };
+        if (storedEmail)
+          return { Authorization: `Bearer email:${storedEmail}` };
+      } catch (e) {}
+      return { Authorization: `Bearer email:admin@local` };
+    };
+
+    const startEdit = (s: any) => {
+      setEditingId(s.id ?? null);
+      setEditValues({
+        code: s.code,
+        duration: toMonths(s.duration),
+        credit: s.credit,
+      });
+    };
+
+    const cancelEdit = () => {
+      setEditingId(null);
+      setEditValues({});
+    };
+
+    const saveEdit = async (id: number) => {
+      try {
+        const payload: any = { id };
+        if (typeof editValues.code === "string") payload.code = editValues.code;
+        if (typeof editValues.duration !== "undefined")
+          payload.durationMonths = Number(editValues.duration);
+        if (typeof editValues.credit !== "undefined")
+          payload.credit = Number(editValues.credit);
+        const res = await fetch("/api/admin/categories/category/subscription", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", ...getAuthHeader() },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          setEditingId(null);
+          fetchSubscriptions(channelId);
+        } else {
+          const d = await res.json();
+          alert(d?.error || "Failed to update");
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    };
+
+    const removeSubWithAuth = async (idOrCode: number | string) => {
+      const q =
+        typeof idOrCode === "number"
+          ? `id=${idOrCode}`
+          : `code=${encodeURIComponent(String(idOrCode))}`;
+      await fetch(`/api/admin/categories/category/subscription?${q}`, {
+        method: "DELETE",
+        headers: { ...getAuthHeader() },
+      });
+      fetchSubscriptions(channelId);
+    };
+
+    return (
+      <div className="overflow-auto">
+        <table className="min-w-full text-left border-collapse">
+          <thead>
+            <tr className="text-white/70 text-sm">
+              <th className="px-3 py-2">Code</th>
+              <th className="px-3 py-2">Duration</th>
+              <th className="px-3 py-2">Credits</th>
+              <th className="px-3 py-2">Status</th>
+              <th className="px-3 py-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {subs.map((s: any) => (
+              <tr
                 key={s.id || s.code}
-                className="flex items-center justify-between bg-black/30 border border-white/10 rounded px-3 py-2"
+                className="bg-black/30 border border-white/10 rounded"
               >
-                <div className="text-white">
-                  {s.code} —{" "}
-                  {s.duration || s.duration === 1
-                    ? `${s.duration}m`
-                    : s.duration}{" "}
-                  {s.credit ?? 0} credits
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => removeSub(s.id)}
-                    className="px-2 py-1 rounded border border-red-500/30 text-red-400"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
+                <td className="px-3 py-2 align-middle">
+                  {editingId === s.id ? (
+                    <input
+                      value={editValues.code || ""}
+                      onChange={(e) =>
+                        setEditValues((ev) => ({ ...ev, code: e.target.value }))
+                      }
+                      className="bg-transparent border border-white/10 rounded px-2 py-1 text-white"
+                    />
+                  ) : (
+                    <div className="text-white">{s.code}</div>
+                  )}
+                </td>
+                <td className="px-3 py-2 align-middle text-white/80">
+                  {editingId === s.id ? (
+                    <select
+                      value={String(
+                        editValues.duration ?? toMonths(s.duration)
+                      )}
+                      onChange={(e) => {
+                        console.log(e.target.value);
+                        setEditValues((ev) => ({
+                          ...ev,
+                          duration: Number(e.target.value),
+                        }));
+                      }}
+                      className=" border border-white/10 rounded px-2 py-1 disabled:bg-transparent text-black"
+                    >
+                      <option value={1}>1 month</option>
+                      <option value={6}>6 months</option>
+                      <option value={12}>12 months</option>
+                    </select>
+                  ) : (
+                    `${toMonths(s.duration)}m`
+                  )}
+                </td>
+                <td className="px-3 py-2 align-middle">
+                  {editingId === s.id ? (
+                    <input
+                      type="number"
+                      value={String(editValues.credit ?? s.credit)}
+                      onChange={(e) =>
+                        setEditValues((ev) => ({
+                          ...ev,
+                          credit: Number(e.target.value),
+                        }))
+                      }
+                      className="bg-transparent border border-white/10 rounded px-2 py-1 text-white"
+                    />
+                  ) : (
+                    <div className="text-white">{s.credit ?? 0}</div>
+                  )}
+                </td>
+                <td className="px-3 py-2 text-white/60">
+                  {s.status || "ACTIVE"}
+                </td>
+                <td className="px-3 py-2">
+                  <div className="flex gap-2">
+                    {editingId === s.id ? (
+                      <>
+                        <button
+                          onClick={() => saveEdit(s.id)}
+                          className="px-2 py-1 rounded border border-green-500 text-green-400"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          className="px-2 py-1 rounded border border-white/10"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => startEdit(s)}
+                          className="px-2 py-1 rounded border border-white/10"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => removeSubWithAuth(s.id ?? s.code)}
+                          className="px-2 py-1 rounded border border-red-500/30 text-red-400"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </td>
+              </tr>
             ))}
-          </div>
-        )}
-      </div>)
+          </tbody>
+        </table>
+      </div>
     );
   }
-  function SubscriptionTable({ channelId }: { channelId: number | null }) {
-  const [editingId, setEditingId] = useState<number | null>(null)
-  const [editValues, setEditValues] = useState<{ code?: string; duration?: number; credit?: number }>({})
 
-  if (!channelId) return null
-  if (sipinner1) return <Spinner size={6} />
-
-  if (!subs || subs.length === 0) return <div className="text-white/60">No subscriptions</div>
-
-  const getAuthHeader = () => {
-    try {
-      const storedId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null
-      const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null
-      if (storedId) return { Authorization: `Bearer ${storedId}` }
-      if (storedEmail) return { Authorization: `Bearer email:${storedEmail}` }
-    } catch (e) {}
-    return { Authorization: `Bearer email:admin@local` }
-  }
-
-  const startEdit = (s: any) => {
-    setEditingId(s.id ?? null)
-    setEditValues({ code: s.code, duration: s.duration, credit: s.credit })
-  }
-
-  const cancelEdit = () => { setEditingId(null); setEditValues({}) }
-
-  const saveEdit = async (id: number) => {
-    const payload: any = { id }
-    if (typeof editValues.code === 'string') payload.code = editValues.code
-    if (typeof editValues.duration !== 'undefined') payload.durationMonths = Number(editValues.duration)
-    if (typeof editValues.credit !== 'undefined') payload.credit = Number(editValues.credit)
-    const res = await fetch('/api/admin/categories/category/subscription', { method: 'PUT', headers: { 'Content-Type': 'application/json', ...getAuthHeader() }, body: JSON.stringify(payload) })
-    if (res.ok) {
-      setEditingId(null)
-      fetchSubscriptions(channelId)
-    } else {
-      const d = await res.json()
-      alert(d?.error || 'Failed to update')
-    }
-  }
-
-  const removeSubWithAuth = async (idOrCode: number | string) => {
-    const q = typeof idOrCode === 'number' ? `id=${idOrCode}` : `code=${encodeURIComponent(String(idOrCode))}`
-    await fetch(`/api/admin/categories/category/subscription?${q}`, { method: 'DELETE', headers: { ...getAuthHeader() } })
-    fetchSubscriptions(channelId)
-  }
-
-  return (
-    <div className="overflow-auto">
-      <table className="min-w-full text-left border-collapse">
-        <thead>
-          <tr className="text-white/70 text-sm">
-            <th className="px-3 py-2">Code</th>
-            <th className="px-3 py-2">Duration</th>
-            <th className="px-3 py-2">Credits</th>
-            <th className="px-3 py-2">Status</th>
-            <th className="px-3 py-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {subs.map((s:any) => (
-            <tr key={s.id || s.code} className="bg-black/30 border border-white/10 rounded">
-              <td className="px-3 py-2 align-middle">
-                {editingId === s.id ? (
-                  <input value={editValues.code || ''} onChange={(e)=>setEditValues(ev=>({...ev, code: e.target.value}))} className="bg-transparent border border-white/10 rounded px-2 py-1 text-white" />
-                ) : (
-                  <div className="text-white">{s.code}</div>
-                )}
-              </td>
-              <td className="px-3 py-2 align-middle text-white/80">
-                {editingId === s.id ? (
-                  <select value={String(editValues.duration ?? s.duration)} onChange={(e)=>setEditValues(ev=>({...ev, duration: Number(e.target.value)}))} className="bg-transparent border border-white/10 rounded px-2 py-1 text-white">
-                    <option value={1}>1 month</option>
-                    <option value={3}>3 months</option>
-                    <option value={6}>6 months</option>
-                    <option value={12}>12 months</option>
-                  </select>
-                ) : (`${s.duration}m`)}
-              </td>
-              <td className="px-3 py-2 align-middle">
-                {editingId === s.id ? (
-                  <input type="number" value={String(editValues.credit ?? s.credit)} onChange={(e)=>setEditValues(ev=>({...ev, credit: Number(e.target.value)}))} className="bg-transparent border border-white/10 rounded px-2 py-1 text-white" />
-                ) : (
-                  <div className="text-white">{s.credit ?? 0}</div>
-                )}
-              </td>
-              <td className="px-3 py-2 text-white/60">{s.status || 'ACTIVE'}</td>
-              <td className="px-3 py-2">
-                <div className="flex gap-2">
-                  {editingId === s.id ? (
-                    <>
-                      <button onClick={()=>saveEdit(s.id)} className="px-2 py-1 rounded border border-green-500 text-green-400">Save</button>
-                      <button onClick={cancelEdit} className="px-2 py-1 rounded border border-white/10">Cancel</button>
-                    </>
-                  ) : (
-                    <>
-                      <button onClick={()=>startEdit(s)} className="px-2 py-1 rounded border border-white/10">Edit</button>
-                      <button onClick={()=>removeSubWithAuth(s.id ?? s.code)} className="px-2 py-1 rounded border border-red-500/30 text-red-400">Delete</button>
-                    </>
-                  )}
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-function PreviewModal({
+  function PreviewModal({
     channelId,
     channel,
     onClose,
@@ -254,11 +302,11 @@ function PreviewModal({
               <X className="w-5 h-5 text-white/70" />
             </button>
           </div>
+          <SubscriptionTable channelId={channelId} />
           <a
             href={`/admin/categories/add/iptv/subscription/${channel.id}`}
             rel="noreferrer"
           >
-            <SubscriptionTable channelId={channelId} />
             <button className="inline-flex items-center gap-1 px-2 py-1 rounded border border-white/10 hover:bg-white/10 text-white/80">
               <Edit2 className="w-4 h-4" /> Add Subscription
             </button>
@@ -267,25 +315,35 @@ function PreviewModal({
       </div>
     );
   }
-  const fetchSubscriptions = async (channelId: number) => {
+  const fetchSubscriptions = async (channelId: number | null) => {
     if (!channelId) return;
     setSipinner1(true);
-    let headers: any = {}
+    let headers: any = {};
     try {
-      const storedId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null
-      const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null
-      if (storedId) headers.Authorization = `Bearer ${storedId}`
-      else if (storedEmail) headers.Authorization = `Bearer email:${storedEmail}`
-      else headers.Authorization = `Bearer email:admin@local`
-    } catch (e) { headers.Authorization = `Bearer email:admin@local` }
-
-    const res = await fetch(`/api/admin/categories/category/subscription?channelId=${channelId}`, { headers })
-    const data = await res.json();
-    if(!data){
-      setSipinner1(false)
-      return
+      const storedId =
+        typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+      const storedEmail =
+        typeof window !== "undefined"
+          ? localStorage.getItem("userEmail")
+          : null;
+      if (storedId) headers.Authorization = `Bearer ${storedId}`;
+      else if (storedEmail)
+        headers.Authorization = `Bearer email:${storedEmail}`;
+      else headers.Authorization = `Bearer email:admin@local`;
+    } catch (e) {
+      headers.Authorization = `Bearer email:admin@local`;
     }
-    setSubs( data.subscriptions );
+
+    const res = await fetch(
+      `/api/admin/categories/category/subscription?channelId=${channelId}`,
+      { headers }
+    );
+    const data = await res.json();
+    if (!data) {
+      setSipinner1(false);
+      return;
+    }
+    setSubs(data.subscriptions);
     setSipinner1(false);
   };
   const fetchChannels = async () => {
@@ -320,27 +378,22 @@ function PreviewModal({
   const start = (page - 1) * pageSize;
   const rows = filtered.slice(start, start + pageSize);
 
-  const currency = (n: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(n || 0);
-
   const openEdit = (ch: IPTVChannel) => {
+    console.log(ch);
+    console.log(form);
     setEdit(ch);
     setForm({
       name: ch.name || "",
-      url: ch.url || "",
       logo: ch.logo || "",
       description: ch.description || "",
       category: ch.category || "Live TV",
-      cost: Number(ch.cost || 0),
     });
   };
 
   const saveEdit = async () => {
     if (!edit) return;
-    const payload = { id: edit.id, ...form };
+   const newlogourl = await replaceLogo()
+    const payload = { id: edit.id, ...form, logo: newlogourl.logoUrl };
     await fetch("/api/admin/categories/category", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -358,15 +411,18 @@ function PreviewModal({
     fetchChannels();
   };
 
-  const replaceLogo = async (file: File) => {
+  const replaceLogo = async () => {
     if (!edit) return;
     const fd = new FormData();
     fd.append("channelId", String(edit.id));
-    fd.append("file", file);
-    fd.append("fileName", file.name);
+    if(logo.logofile)  {
+      fd.append("file", logo.logofile);
+    }
+    
+    fd.append("fileName", logo.logofile?.name || "");
     if (edit.logo) fd.append("oldLogoUrl", edit.logo);
-    await fetch("/api/admin/categories/upload", { method: "PUT", body: fd });
-    fetchChannels();
+    const res = await fetch("/api/admin/categories/upload", { method: "PUT", body: fd });
+    return res.json();
   };
 
   const deleteLogo = async () => {
@@ -382,7 +438,11 @@ function PreviewModal({
     setForm((f) => ({ ...f, logo: "" }));
     fetchChannels();
   };
-
+useEffect(() => {
+  if (!edit) {
+    setLogo({ logourl: '', logofile: null });
+  }
+}, [edit]);
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -457,12 +517,6 @@ function PreviewModal({
                   </div>
                 </div>
                 <div className="flex items-center justify-between mt-3">
-                  <div className="text-xs text-white/60">
-                    {new Intl.NumberFormat("en-US", {
-                      style: "currency",
-                      currency: "USD",
-                    }).format(ch.cost || 0)}
-                  </div>
                   <div
                     className="flex gap-2"
                     onClick={(e) => e.stopPropagation()}
@@ -520,7 +574,8 @@ function PreviewModal({
       {edit && (
         <div
           className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
-          onClick={() => setEdit(null)}
+          onClick={() => 
+            setEdit(null)}
         >
           <div
             className="w-full max-w-lg bg-black/30 border border-white/10 rounded-xl p-5 backdrop-blur-md"
@@ -529,7 +584,11 @@ function PreviewModal({
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-white font-semibold">Edit Channel</h3>
               <button
-                onClick={() => setEdit(null)}
+                onClick={() => 
+                  setEdit(null)
+
+                
+              }
                 className="p-1 rounded hover:bg-white/10"
               >
                 <X className="w-5 h-5 text-white/70" />
@@ -542,14 +601,6 @@ function PreviewModal({
                   className="mt-1 w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                />
-              </label>
-              <label className="text-sm text-white/70">
-                URL
-                <input
-                  className="mt-1 w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white"
-                  value={form.url}
-                  onChange={(e) => setForm({ ...form, url: e.target.value })}
                 />
               </label>
               <label className="text-sm text-white/70">
@@ -573,18 +624,6 @@ function PreviewModal({
                     }
                   />
                 </label>
-                <label className="text-sm text-white/70">
-                  Cost
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="mt-1 w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white"
-                    value={form.cost}
-                    onChange={(e) =>
-                      setForm({ ...form, cost: Number(e.target.value) })
-                    }
-                  />
-                </label>
               </div>
               <div className="text-sm text-white/70">
                 Logo
@@ -592,7 +631,7 @@ function PreviewModal({
                   {form.logo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={form.logo}
+                      src={logo.logourl !== "" ? logo.logourl : form.logo}
                       alt={form.name}
                       className="h-10 w-10 rounded bg-white/10 object-contain"
                     />
@@ -609,7 +648,11 @@ function PreviewModal({
                       className="hidden"
                       onChange={(e) => {
                         const f = e.target.files?.[0];
-                        if (f) replaceLogo(f);
+                        if (f)
+                          setLogo({
+                            logofile: f,
+                            logourl: URL.createObjectURL(f),
+                          });
                       }}
                     />
                   </label>
