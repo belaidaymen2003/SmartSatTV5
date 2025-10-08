@@ -105,6 +105,8 @@ export default function IPTVPage() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editValues, setEditValues] = useState<{ code?: string; duration?: number; credit?: number }>({})
 
+  const toMonths = (d: any) => (typeof d === 'number' ? d : d === 'ONE_MONTH' ? 1 : d === 'SIX_MONTHS' ? 6 : d === 'ONE_YEAR' ? 12 : 1)
+
   if (!channelId) return null
   if (sipinner1) return <Spinner size={6} />
 
@@ -122,7 +124,7 @@ export default function IPTVPage() {
 
   const startEdit = (s: any) => {
     setEditingId(s.id ?? null)
-    setEditValues({ code: s.code, duration: s.duration, credit: s.credit })
+    setEditValues({ code: s.code, duration: toMonths(s.duration), credit: s.credit })
   }
 
   const cancelEdit = () => { setEditingId(null); setEditValues({}) }
@@ -172,13 +174,13 @@ export default function IPTVPage() {
               </td>
               <td className="px-3 py-2 align-middle text-white/80">
                 {editingId === s.id ? (
-                  <select value={String(editValues.duration ?? s.duration)} onChange={(e)=>setEditValues(ev=>({...ev, duration: Number(e.target.value)}))} className="bg-transparent border border-white/10 rounded px-2 py-1 text-white">
+                  <select value={String(editValues.duration ?? toMonths(s.duration))} onChange={(e)=>setEditValues(ev=>({...ev, duration: Number(e.target.value)}))} className="bg-transparent border border-white/10 rounded px-2 py-1 text-white">
                     <option value={1}>1 month</option>
                     <option value={3}>3 months</option>
                     <option value={6}>6 months</option>
                     <option value={12}>12 months</option>
                   </select>
-                ) : (`${s.duration}m`)}
+                ) : (`${toMonths(s.duration)}m`)}
               </td>
               <td className="px-3 py-2 align-middle">
                 {editingId === s.id ? (
@@ -254,15 +256,10 @@ function PreviewModal({
               <X className="w-5 h-5 text-white/70" />
             </button>
           </div>
-          <a
-            href={`/admin/categories/add/iptv/subscription/${channel.id}`}
-            rel="noreferrer"
-          >
-            <SubscriptionTable channelId={channelId} />
-            <button className="inline-flex items-center gap-1 px-2 py-1 rounded border border-white/10 hover:bg-white/10 text-white/80">
-              <Edit2 className="w-4 h-4" /> Add Subscription
-            </button>
-          </a>
+          <SubscriptionTable channelId={channelId} />
+          <div className="mt-4 border-t border-white/10 pt-3">
+            <AddSubscriptionForm channelId={channelId} />
+          </div>
         </div>
       </div>
     );
