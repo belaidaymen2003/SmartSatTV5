@@ -560,59 +560,20 @@ useEffect(() => {
             </div>
 
             <form className="grid grid-cols-1 gap-4" onSubmit={(e)=>{ e.preventDefault(); saveEdit(); }}>
-              <div className="relative">
-                <input
-                  id="channel-name"
-                  className="peer mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-orange-400"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Channel name"
-                  aria-label="Channel name"
-                />
-                <label htmlFor="channel-name" className="absolute left-4 -top-2.5 bg-black/60 px-1 text-xs text-white/70 peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-white/50 transition-all">
-                  Name
-                </label>
-              </div>
-
-              <div className="relative">
-                <textarea
-                  id="channel-desc"
-                  className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-orange-400"
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="Short description"
-                  rows={3}
-                  aria-label="Channel description"
-                />
-                <label htmlFor="channel-desc" className="absolute left-4 -top-2.5 bg-black/60 px-1 text-xs text-white/70">Description</label>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="relative">
-                  <input
-                    id="channel-category"
-                    className="peer mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-orange-400"
-                    value={form.category}
-                    onChange={(e) => setForm({ ...form, category: e.target.value })}
-                    placeholder="Category"
-                    aria-label="Channel category"
-                  />
-                  <label htmlFor="channel-category" className="absolute left-4 -top-2.5 bg-black/60 px-1 text-xs text-white/70">Category</label>
-                </div>
-
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
+                <div className="sm:col-span-1 flex flex-col items-center">
                   <div className="text-sm text-white/70 mb-2">Logo</div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col items-center gap-3 bg-black/30 p-3 rounded-lg w-full">
                     {form.logo ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={logo.logourl !== "" ? logo.logourl : form.logo} alt={form.name} className="h-12 w-12 rounded-md bg-white/6 object-contain" />
+                      <img src={logo.logourl !== "" ? logo.logourl : form.logo} alt={form.name} className="h-24 w-24 rounded-md bg-white/6 object-contain" />
                     ) : (
-                      <div className="h-12 w-12 rounded-md bg-white/6 grid place-items-center">
-                        <ImageIcon className="w-5 h-5 text-white/40" />
+                      <div className="h-24 w-24 rounded-md bg-white/6 grid place-items-center">
+                        <ImageIcon className="w-6 h-6 text-white/40" />
                       </div>
                     )}
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-center gap-2">
                       <label className="px-3 py-2 border border-white/10 rounded-lg cursor-pointer hover:bg-white/6 text-white/90">
                         Replace
                         <input
@@ -629,6 +590,49 @@ useEffect(() => {
                         <button type="button" onClick={deleteLogo} className="px-3 py-2 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/10">Remove</button>
                       )}
                     </div>
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="relative">
+                      <input
+                        id="channel-name"
+                        className="peer mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        value={form.name}
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        placeholder="Channel name"
+                        aria-label="Channel name"
+                      />
+                      <label htmlFor="channel-name" className="absolute left-4 -top-2.5 bg-black/60 px-1 text-xs text-white/70 peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-white/50 transition-all">
+                        Name
+                      </label>
+                    </div>
+
+                    <div className="relative">
+                      <input
+                        id="channel-category"
+                        className="peer mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        value={form.category}
+                        onChange={(e) => setForm({ ...form, category: e.target.value })}
+                        placeholder="Category"
+                        aria-label="Channel category"
+                      />
+                      <label htmlFor="channel-category" className="absolute left-4 -top-2.5 bg-black/60 px-1 text-xs text-white/70">Category</label>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <label htmlFor="channel-desc" className="block text-xs text-white/70 mb-1">Description</label>
+                    <textarea
+                      id="channel-desc"
+                      className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                      value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })}
+                      placeholder="Short description"
+                      rows={4}
+                      aria-label="Channel description"
+                    />
                   </div>
                 </div>
               </div>
