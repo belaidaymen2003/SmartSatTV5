@@ -213,6 +213,80 @@ export default function IPTVPage() {
   )
 }
 
+const AddSubscriptionForm = ({ channelId }: { channelId: number | null }) => {
+  const [code, setCode] = useState("");
+  const [duration, setDuration] = useState<number>(1);
+  const [credit, setCredit] = useState<number>(0);
+  const [saving, setSaving] = useState(false);
+
+  if (!channelId) return null;
+
+  const getAuthHeader = () => {
+    try {
+      const storedId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null
+      const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null
+      if (storedId) return { Authorization: `Bearer ${storedId}` }
+      if (storedEmail) return { Authorization: `Bearer email:${storedEmail}` }
+    } catch (e) {}
+    return { Authorization: `Bearer email:admin@local` }
+  }
+
+  const add = async () => {
+    if (!code) { alert('Code required'); return }
+    setSaving(true)
+    try {
+      const res = await fetch('/api/admin/categories/category/subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        body: JSON.stringify([{ channelId, code, durationMonths: duration, credit }])
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(()=>null)
+        throw new Error(d?.error || 'Failed to add')
+      }
+      setCode(''); setDuration(1); setCredit(0)
+      fetchSubscriptions(channelId)
+    } catch (err: any) {
+      alert(err?.message || 'Failed to add')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          value={code}
+          onChange={(e)=>setCode(e.target.value)}
+          placeholder="Code"
+          className="bg-transparent border border-white/10 rounded px-2 py-1 text-white"
+        />
+        <select
+          value={String(duration)}
+          onChange={(e)=>setDuration(Number(e.target.value))}
+          className="bg-transparent border border-white/10 rounded px-2 py-1 text-white"
+        >
+          <option value={1}>1 month</option>
+          <option value={3}>3 months</option>
+          <option value={6}>6 months</option>
+          <option value={12}>12 months</option>
+        </select>
+        <input
+          type="number"
+          value={String(credit)}
+          onChange={(e)=>setCredit(Number(e.target.value))}
+          placeholder="Credits"
+          className="bg-transparent border border-white/10 rounded px-2 py-1 text-white w-24"
+        />
+        <button onClick={add} disabled={saving} className="inline-flex items-center gap-1 px-2 py-1 rounded border border-white/10 hover:bg-white/10 text-white/80 disabled:opacity-50">
+          <Plus className="w-4 h-4" /> {saving ? 'Adding...' : 'Add Subscription'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function PreviewModal({
     channelId,
     channel,
