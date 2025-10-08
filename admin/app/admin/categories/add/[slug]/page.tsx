@@ -1,4 +1,3 @@
-"use client";
 import {
   Calendar,
   Film,
@@ -40,11 +39,11 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
 
   const onFileImage = (file?: File) => {
     if (!file) return;
-    
+
     const urlLogo = URL.createObjectURL(file);
     setLocalUrl(urlLogo);
 
-  
+
     formData.append("file", file);
     formData.append("fileName", file.name);
   };
@@ -80,78 +79,109 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
     <div className="space-y-6">
       <div className="bg-black/20 backdrop-blur-sm rounded-xl border border-white/10 p-6">
         {params.slug === 'gift-cards' ? (
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <input value={gift.title} onChange={(e)=>setGift({ ...gift, title: e.target.value })} placeholder="Title" className="md:col-span-8 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30" />
-            <div className="md:col-span-2"></div>
-            <div className="md:col-span-2"></div>
-            <textarea value={gift.description} onChange={(e)=>setGift({ ...gift, description: e.target.value })} placeholder="Description" className="md:col-span-12 h-28 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30" />
-            <div className="md:col-span-12 flex w-full gap-3">
-              <label className="flex items-center gap-2 bg-black/40 border border-white/10 rounded-lg px-3 py-2">
-                <ImageIcon className="w-4 h-4 text-white/60" />
-                <label className="ml-2 cursor-pointer inline-flex items-center gap-1 text-white/70">
-                  <img src={localurl} alt="" className=" h-10 w-14 object-contain" />
-                  <Upload className="w-4 h-4" />
-                  <span>Browse</span>
-                  <input onChange={(e) => { onFileImage(e.target.files?.[0]); }} type="file" className="hidden" />
-                </label>
-              </label>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-8 space-y-4">
+              <div>
+                <label className="block text-sm text-white/70 mb-2">Title</label>
+                <input value={gift.title} onChange={(e)=>setGift({ ...gift, title: e.target.value })} placeholder="Gift title" className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-orange-400" />
+              </div>
+
+              <div>
+                <label className="block text-sm text-white/70 mb-2">Description</label>
+                <textarea value={gift.description} onChange={(e)=>setGift({ ...gift, description: e.target.value })} placeholder="Short description" className="w-full h-36 bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-orange-400" />
+              </div>
+            </div>
+
+            <div className="lg:col-span-4">
+              <div className="bg-black/30 p-4 rounded-lg flex flex-col items-center">
+                <div className="w-full text-sm text-white/70 mb-3">Cover</div>
+                <div className="h-40 w-full bg-white/5 rounded-md flex items-center justify-center overflow-hidden">
+                  {localurl ? <img src={localurl} alt="cover" className="h-full w-full object-contain" /> : <ImageIcon className="w-8 h-8 text-white/40" />}
+                </div>
+                <div className="mt-4 w-full flex gap-2">
+                  <label className="flex-1 text-center px-3 py-2 rounded-lg border border-white/10 cursor-pointer hover:bg-white/6">Browse
+                    <input onChange={(e) => { onFileImage(e.target.files?.[0]); }} type="file" className="hidden" />
+                  </label>
+                  <button className="px-3 py-2 rounded-lg border border-red-500/30 text-red-400" onClick={()=>{ setLocalUrl(''); formData.delete('file') }}>Remove</button>
+                </div>
+              </div>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <input
-              value={data.title}
-              onChange={(e) => setData({ ...data, title: e.target.value.trim() })}
-              placeholder="Title"
-              className="col-span-12 md:col-span-8 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30"
-            />
-            <select
-              value={data.category}
-              onChange={(e) => setData({ ...data, category: e.target.value.trim() })}
-              className="col-span-12 sm:col-span-2 md:col-span-2 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white"
-            >
-              {categories.map((q) => (
-                <option key={q}>{q}</option>
-              ))}
-            </select>
-            <div className="md:col-span-12 flex w-full gap-3">
-              <label className="flex items-center gap-2 bg-black/40 border border-white/10 rounded-lg px-3 py-2">
-                
-               <label className=" cursor-pointer inline-flex items-center gap-1 text-white/70">
-                  { localurl ? <img src={localurl} alt="" className=" h-10 w-14 object-contain" /> :<ImageIcon className="w-4 h-4 text-white/60" />}
-                  <Upload className="w-4 h-4" />
-                  <span>Browse</span>
-                  <input
-                    onChange={(e) => {
-                      onFileImage(e.target.files?.[0]);
-                    }}
-                    type="file"
-                    className="hidden"
-                  />
-                </label>
-              </label>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-8 space-y-4">
+              <div>
+                <label className="block text-sm text-white/70 mb-2">Title</label>
+                <input
+                  value={data.title}
+                  onChange={(e) => setData({ ...data, title: e.target.value })}
+                  placeholder="Title"
+                  className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                />
+              </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-sm text-white/70 mb-2">Category</label>
+                  <select
+                    value={data.category}
+                    onChange={(e) => setData({ ...data, category: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  >
+                    {categories.map((q) => (
+                      <option key={q}>{q}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="sm:col-span-1">
+                  <div className="text-sm text-white/70 mb-2">Optional</div>
+                  <div className="text-sm text-white/50">Additional settings can go here</div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm text-white/70 mb-2">Description</label>
+                <textarea
+                  value={data.description}
+                  onChange={(e) => setData({ ...data, description: e.target.value })}
+                  placeholder="Description"
+                  className="w-full h-36 bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                />
+              </div>
             </div>
 
+            <div className="lg:col-span-4">
+              <div className="bg-black/30 p-4 rounded-lg">
+                <div className="text-sm text-white/70 mb-3">Cover / Logo</div>
+                <div className="h-40 w-full bg-white/5 rounded-md flex items-center justify-center overflow-hidden">
+                  {localurl ? <img src={localurl} alt="cover" className="h-full w-full object-contain" /> : <ImageIcon className="w-8 h-8 text-white/40" />}
+                </div>
 
+                <div className="mt-4 flex gap-2">
+                  <label className="flex-1 text-center px-3 py-2 rounded-lg border border-white/10 cursor-pointer hover:bg-white/6">Browse
+                    <input
+                      onChange={(e) => { onFileImage(e.target.files?.[0]); }}
+                      type="file"
+                      className="hidden"
+                    />
+                  </label>
+                  <button type="button" onClick={()=>{ setLocalUrl(''); formData.delete('file') }} className="px-3 py-2 rounded-lg border border-red-500/30 text-red-400">Remove</button>
+                </div>
 
-            <textarea
-              value={data.description}
-              onChange={(e) => setData({ ...data, description: e.target.value.trim() })}
-              placeholder="Description"
-              className="md:col-span-12 h-28 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30"
-            />
+                <div className="mt-6">
+                  <button
+                    disabled={loading || !data.title.trim()}
+                    onClick={submitData}
+                    className="w-full px-4 py-3 rounded-lg bg-gradient-to-r from-orange-500 to-yellow-400 text-black font-semibold shadow"
+                  >
+                    {loading ? 'Publishing...' : 'Publish'}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
-
-        <div className="mt-6">
-          <button
-            disabled={loading || (params.slug === 'gift-cards' ? !gift.title.trim() : !data.title.trim())} onClick={submitData} className="px-5 py-2 rounded-lg border border-orange-500 text-orange-400 hover:bg-orange-500/10 disabled:opacity-60 inline-flex items-center gap-2"
-          >
-            <Film className="w-4 h-4" />
-            {loading ? 'Publishing...' : 'Publish'}
-          </button>
-        </div>
       </div>
     </div>
   );
