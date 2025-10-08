@@ -144,109 +144,74 @@ export default function IPTVPage() {
 
     return (
       <div className="overflow-auto">
-        <table className="min-w-full text-left border-collapse">
+        <table className="min-w-full text-left border-separate border-spacing-y-2">
           <thead>
             <tr className="text-white/70 text-sm">
-              <th className="px-3 py-2">Code</th>
-              <th className="px-3 py-2">Duration</th>
-              <th className="px-3 py-2">Credits</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Actions</th>
+              <th className="px-3 py-2 text-left">Code</th>
+              <th className="px-3 py-2 text-left">Duration</th>
+              <th className="px-3 py-2 text-left">Credits</th>
+              <th className="px-3 py-2 text-left">Status</th>
+              <th className="px-3 py-2 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
             {subs.map((s: any) => (
-              <tr
-                key={s.id || s.code}
-                className="bg-black/30 border border-white/10 rounded"
-              >
-                <td className="px-3 py-2 align-middle">
+              <tr key={s.id || s.code} className="bg-black/40 hover:bg-black/50 rounded-lg">
+                <td className="px-3 py-3 align-middle w-40">
                   {editingId === s.id ? (
                     <input
                       value={editValues.code || ""}
-                      onChange={(e) =>
-                        setEditValues((ev) => ({ ...ev, code: e.target.value }))
-                      }
-                      className="bg-transparent border border-white/10 rounded px-2 py-1 text-white"
+                      onChange={(e) => setEditValues((ev) => ({ ...ev, code: e.target.value }))}
+                      className="w-full bg-transparent border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-orange-400"
+                      aria-label="Edit code"
                     />
                   ) : (
-                    <div className="text-white">{s.code}</div>
+                    <div className="text-white font-medium truncate" title={s.code}>{s.code}</div>
                   )}
                 </td>
-                <td className="px-3 py-2 align-middle text-white/80">
+                <td className="px-3 py-3 align-middle text-white/80 w-36">
                   {editingId === s.id ? (
                     <select
-                      value={String(
-                        editValues.duration ?? toMonths(s.duration)
-                      )}
-                      onChange={(e) => {
-                        console.log(e.target.value);
-                        setEditValues((ev) => ({
-                          ...ev,
-                          duration: Number(e.target.value),
-                        }));
-                      }}
-                      className=" border border-white/10 rounded px-2 py-1 disabled:bg-transparent text-black"
+                      value={String(editValues.duration ?? toMonths(s.duration))}
+                      onChange={(e) => setEditValues((ev) => ({ ...ev, duration: Number(e.target.value) }))}
+                      className="w-full bg-white text-black rounded px-2 py-2"
+                      aria-label="Edit duration"
                     >
                       <option value={1}>1 month</option>
                       <option value={6}>6 months</option>
                       <option value={12}>12 months</option>
                     </select>
                   ) : (
-                    `${toMonths(s.duration)}m`
+                    <div className="text-white">{toMonths(s.duration)}m</div>
                   )}
                 </td>
-                <td className="px-3 py-2 align-middle">
+                <td className="px-3 py-3 align-middle w-28">
                   {editingId === s.id ? (
                     <input
                       type="number"
                       value={String(editValues.credit ?? s.credit)}
-                      onChange={(e) =>
-                        setEditValues((ev) => ({
-                          ...ev,
-                          credit: Number(e.target.value),
-                        }))
-                      }
-                      className="bg-transparent border border-white/10 rounded px-2 py-1 text-white"
+                      onChange={(e) => setEditValues((ev) => ({ ...ev, credit: Number(e.target.value) }))}
+                      className="w-full bg-transparent border border-white/10 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-orange-400"
+                      aria-label="Edit credit"
                     />
                   ) : (
                     <div className="text-white">{s.credit ?? 0}</div>
                   )}
                 </td>
-                <td className="px-3 py-2 text-white/60">
-                  {s.status || "ACTIVE"}
-                </td>
-                <td className="px-3 py-2">
+                <td className="px-3 py-3 text-white/60 w-28">{s.status || "ACTIVE"}</td>
+                <td className="px-3 py-3">
                   <div className="flex gap-2">
                     {editingId === s.id ? (
                       <>
-                        <button
-                          onClick={() => saveEdit(s.id)}
-                          className="px-2 py-1 rounded border border-green-500 text-green-400"
-                        >
+                        <button onClick={() => saveEdit(s.id)} className="flex items-center gap-2 px-3 py-2 rounded bg-green-600/20 border border-green-600 text-green-300 hover:bg-green-600/30">
                           Save
                         </button>
-                        <button
-                          onClick={cancelEdit}
-                          className="px-2 py-1 rounded border border-white/10"
-                        >
-                          Cancel
-                        </button>
+                        <button onClick={cancelEdit} className="px-3 py-2 rounded border border-white/10 text-white/80 hover:bg-white/5">Cancel</button>
                       </>
                     ) : (
                       <>
-                        <button
-                          onClick={() => startEdit(s)}
-                          className="px-2 py-1 rounded border border-white/10"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => removeSubWithAuth(s.id ?? s.code)}
-                          className="px-2 py-1 rounded border border-red-500/30 text-red-400"
-                        >
-                          Delete
-                        </button>
+                        <button onClick={() => startEdit(s)} className="px-3 py-2 rounded border border-white/10 text-white/90 hover:bg-white/5">Edit</button>
+                        <button onClick={() => removeSubWithAuth(s.id ?? s.code)} className="px-3 py-2 rounded border border-red-500/30 text-red-400 hover:bg-red-500/10">Delete</button>
                       </>
                     )}
                   </div>
@@ -573,115 +538,106 @@ useEffect(() => {
 
       {edit && (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
-          onClick={() => 
-            setEdit(null)}
+          className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4"
+          onClick={() => setEdit(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Edit Channel Modal"
         >
           <div
-            className="w-full max-w-lg bg-black/30 border border-white/10 rounded-xl p-5 backdrop-blur-md"
+            className="w-full max-w-2xl bg-gradient-to-b from-black/60 to-black/30 border border-white/6 rounded-xl p-6 backdrop-blur-md shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white font-semibold">Edit Channel</h3>
+              <h3 className="text-white font-semibold text-lg">Edit Channel</h3>
               <button
-                onClick={() => 
-                  setEdit(null)
-
-                
-              }
-                className="p-1 rounded hover:bg-white/10"
+                onClick={() => setEdit(null)}
+                className="p-2 rounded hover:bg-white/6"
+                aria-label="Close edit dialog"
               >
                 <X className="w-5 h-5 text-white/70" />
               </button>
             </div>
-            <div className="grid grid-cols-1 gap-3">
-              <label className="text-sm text-white/70">
-                Name
+
+            <form className="grid grid-cols-1 gap-4" onSubmit={(e)=>{ e.preventDefault(); saveEdit(); }}>
+              <div className="relative">
                 <input
-                  className="mt-1 w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white"
+                  id="channel-name"
+                  className="peer mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-orange-400"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="Channel name"
+                  aria-label="Channel name"
                 />
-              </label>
-              <label className="text-sm text-white/70">
-                Description
-                <textarea
-                  className="mt-1 w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white"
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
-                />
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <label className="text-sm text-white/70">
-                  Category
-                  <input
-                    className="mt-1 w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white"
-                    value={form.category}
-                    onChange={(e) =>
-                      setForm({ ...form, category: e.target.value })
-                    }
-                  />
+                <label htmlFor="channel-name" className="absolute left-4 -top-2.5 bg-black/60 px-1 text-xs text-white/70 peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-white/50 transition-all">
+                  Name
                 </label>
               </div>
-              <div className="text-sm text-white/70">
-                Logo
-                <div className="mt-2 flex items-center gap-3">
-                  {form.logo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={logo.logourl !== "" ? logo.logourl : form.logo}
-                      alt={form.name}
-                      className="h-10 w-10 rounded bg-white/10 object-contain"
-                    />
-                  ) : (
-                    <div className="h-10 w-10 rounded bg-white/10 grid place-items-center">
-                      <ImageIcon className="w-5 h-5 text-white/40" />
+
+              <div className="relative">
+                <textarea
+                  id="channel-desc"
+                  className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Short description"
+                  rows={3}
+                  aria-label="Channel description"
+                />
+                <label htmlFor="channel-desc" className="absolute left-4 -top-2.5 bg-black/60 px-1 text-xs text-white/70">Description</label>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="relative">
+                  <input
+                    id="channel-category"
+                    className="peer mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    value={form.category}
+                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    placeholder="Category"
+                    aria-label="Channel category"
+                  />
+                  <label htmlFor="channel-category" className="absolute left-4 -top-2.5 bg-black/60 px-1 text-xs text-white/70">Category</label>
+                </div>
+
+                <div>
+                  <div className="text-sm text-white/70 mb-2">Logo</div>
+                  <div className="flex items-center gap-3">
+                    {form.logo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={logo.logourl !== "" ? logo.logourl : form.logo} alt={form.name} className="h-12 w-12 rounded-md bg-white/6 object-contain" />
+                    ) : (
+                      <div className="h-12 w-12 rounded-md bg-white/6 grid place-items-center">
+                        <ImageIcon className="w-5 h-5 text-white/40" />
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                      <label className="px-3 py-2 border border-white/10 rounded-lg cursor-pointer hover:bg-white/6 text-white/90">
+                        Replace
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) setLogo({ logofile: f, logourl: URL.createObjectURL(f) });
+                          }}
+                        />
+                      </label>
+                      {form.logo && (
+                        <button type="button" onClick={deleteLogo} className="px-3 py-2 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/10">Remove</button>
+                      )}
                     </div>
-                  )}
-                  <label className="px-3 py-1.5 border border-white/10 rounded cursor-pointer hover:bg-white/10 text-white/80">
-                    Replace
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f)
-                          setLogo({
-                            logofile: f,
-                            logourl: URL.createObjectURL(f),
-                          });
-                      }}
-                    />
-                  </label>
-                  {form.logo && (
-                    <button
-                      type="button"
-                      onClick={deleteLogo}
-                      className="px-3 py-1.5 border border-red-500/30 text-red-400 rounded hover:bg-red-500/10"
-                    >
-                      Remove
-                    </button>
-                  )}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <button
-                onClick={() => setEdit(null)}
-                className="px-4 py-2 rounded border border-white/20 text-white/80 hover:bg-white/10"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={saveEdit}
-                className="px-4 py-2 rounded border border-orange-500 text-orange-400 hover:bg-orange-500/10"
-              >
-                Save
-              </button>
-            </div>
+
+              <div className="flex justify-end gap-3 mt-2">
+                <button type="button" onClick={() => setEdit(null)} className="px-4 py-2 rounded-lg border border-white/20 text-white/80 hover:bg-white/6">Cancel</button>
+                <button type="submit" className="px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-yellow-400 text-black font-semibold shadow">Save</button>
+              </div>
+            </form>
           </div>
         </div>
       )}
