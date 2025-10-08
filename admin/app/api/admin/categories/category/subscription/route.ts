@@ -116,6 +116,7 @@ export async function POST(request: NextRequest) {
             duration: durationEnum as any,
             startDate: start,
             endDate: end,
+            
             // userId: resolved userId, add if needed
           };
         }),

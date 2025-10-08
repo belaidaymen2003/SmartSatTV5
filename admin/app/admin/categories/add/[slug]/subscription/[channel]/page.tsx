@@ -42,9 +42,9 @@ export default function CategorySubscriptionPage() {
     setMessage(null)
     try {
       const payloads = rows.map(r => ({ channelId, code: r.code.trim(), durationMonths: r.duration, credit: Number(r.credit || 0) })).filter(r => r.code)
-      for (const payload of payloads) {
-        await fetch('/api/admin/categories/category/subscription', { method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeader() }, body: JSON.stringify(payload) })
-      }
+      
+        await fetch('/api/admin/categories/category/subscription', { method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeader() }, body: JSON.stringify(payloads) })
+      
       setMessage('Subscription codes added')
       setRows([{ code: '', duration: 1, credit: 0 }])
       fetchSubscriptions()
@@ -117,7 +117,7 @@ export default function CategorySubscriptionPage() {
           {message && <div className="text-sm text-white/70">{message}</div>}
 
           <div>
-            <h3 className="text-white font-semibold mb-2">Existing codes</h3>
+            {/* <h3 className="text-white font-semibold mb-2">Existing codes</h3>
             {subs.length === 0 ? <div className="text-white/60">No subscriptions</div> : (
               <div className="overflow-auto">
                 <table className="min-w-full text-left border-collapse">
@@ -141,7 +141,7 @@ export default function CategorySubscriptionPage() {
                   </tbody>
                 </table>
               </div>
-            )}
+            )} */}
 
             {editing && (
               <div className="bg-black/20 border border-white/10 rounded p-3 mt-3">

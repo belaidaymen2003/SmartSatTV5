@@ -393,7 +393,7 @@ export default function IPTVPage() {
   const saveEdit = async () => {
     if (!edit) return;
    const newlogourl = await replaceLogo()
-    const payload = { id: edit.id, ...form };
+    const payload = { id: edit.id, ...form, logo: newlogourl.logoUrl };
     await fetch("/api/admin/categories/category", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
