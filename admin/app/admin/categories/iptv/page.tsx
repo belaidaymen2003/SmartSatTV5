@@ -256,10 +256,15 @@ function PreviewModal({
               <X className="w-5 h-5 text-white/70" />
             </button>
           </div>
-          <SubscriptionTable channelId={channelId} />
-          <div className="mt-4 border-t border-white/10 pt-3">
-            <AddSubscriptionForm channelId={channelId} />
-          </div>
+          <a
+            href={`/admin/categories/add/iptv/subscription/${channel.id}`}
+            rel="noreferrer"
+          >
+            <SubscriptionTable channelId={channelId} />
+            <button className="inline-flex items-center gap-1 px-2 py-1 rounded border border-white/10 hover:bg-white/10 text-white/80">
+              <Edit2 className="w-4 h-4" /> Add Subscription
+            </button>
+          </a>
         </div>
       </div>
     );
