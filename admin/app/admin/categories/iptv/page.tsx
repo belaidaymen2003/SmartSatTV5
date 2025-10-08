@@ -18,15 +18,16 @@ import Spinner from "@/components/UI/Spinner";
 type IPTVChannel = {
   id: number;
   name: string;
-  url: string;
   logo: string | null;
   description: string | null;
   category: string | null;
-  cost: number;
   createdAt: string;
   updatedAt: string;
 };
-
+type logo = {
+  logourl: string;
+  logofile: File | null;
+}
 export default function IPTVPage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -41,68 +42,17 @@ export default function IPTVPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
-    url: "",
     logo: "",
     description: "",
     category: "Live TV",
-    cost: 0,
+
   });
   const [preview, setPreview] = useState<IPTVChannel | null>(null);
   const pageSize = 12;
   const [page, setPage] = useState(1);
+  const [logo, setLogo] = useState<logo>({logourl: "", logofile: null});
 
-  const removeSub = async (idOrCode: number | string) => {
-    const q =
-      typeof idOrCode === "number"
-        ? `id=${idOrCode}`
-        : `code=${encodeURIComponent(String(idOrCode))}`;
-    await fetch(`/api/admin/categories/category/subscription?${q}`, {
-      method: "DELETE",
-    });
-    await fetchSubscriptions(idOrCode as number);
-  };
-  function previewsubscription(
-    channelId: number | null,
-    removeSub: (idOrCode: number | string) => void
-  ) {
-    if (!channelId) return null;
 
-    return sipinner1 ? (
-      <Spinner size={6} />
-    ) : (
-      <div>
-        <h3 className="text-white font-semibold mb-2">Existing codes</h3>
-        {subs?.length === 0 ? (
-          <div className="text-white/60">No subscriptions</div>
-        ) : (
-          <div className="grid gap-2">
-            {subs.map((s) => (
-              <div
-                key={s.id || s.code}
-                className="flex items-center justify-between bg-black/30 border border-white/10 rounded px-3 py-2"
-              >
-                <div className="text-white">
-                  {s.code} —{" "}
-                  {s.duration || s.duration === 1
-                    ? `${s.duration}m`
-                    : s.duration}{" "}
-                  {s.credit ?? 0} credits
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => removeSub(s.id)}
-                    className="px-2 py-1 rounded border border-red-500/30 text-red-400"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
   function SubscriptionTable({ channelId }: { channelId: number | null }) {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editValues, setEditValues] = useState<{
@@ -431,21 +381,17 @@ export default function IPTVPage() {
   const start = (page - 1) * pageSize;
   const rows = filtered.slice(start, start + pageSize);
 
-  const currency = (n: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(n || 0);
+
 
   const openEdit = (ch: IPTVChannel) => {
+    console.log(ch)
+    console.log(form)
     setEdit(ch);
     setForm({
       name: ch.name || "",
-      url: ch.url || "",
       logo: ch.logo || "",
       description: ch.description || "",
       category: ch.category || "Live TV",
-      cost: Number(ch.cost || 0),
     });
   };
 
@@ -469,12 +415,12 @@ export default function IPTVPage() {
     fetchChannels();
   };
 
-  const replaceLogo = async (file: File) => {
+  const replaceLogo = async () => {
     if (!edit) return;
     const fd = new FormData();
     fd.append("channelId", String(edit.id));
-    fd.append("file", file);
-    fd.append("fileName", file.name);
+    fd.append("file", logo.logofile || new Blob());
+    fd.append("fileName", logo.logofile?.name || "");
     if (edit.logo) fd.append("oldLogoUrl", edit.logo);
     await fetch("/api/admin/categories/upload", { method: "PUT", body: fd });
     fetchChannels();
@@ -656,14 +602,6 @@ export default function IPTVPage() {
                 />
               </label>
               <label className="text-sm text-white/70">
-                URL
-                <input
-                  className="mt-1 w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white"
-                  value={form.url}
-                  onChange={(e) => setForm({ ...form, url: e.target.value })}
-                />
-              </label>
-              <label className="text-sm text-white/70">
                 Description
                 <textarea
                   className="mt-1 w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white"
@@ -684,18 +622,7 @@ export default function IPTVPage() {
                     }
                   />
                 </label>
-                <label className="text-sm text-white/70">
-                  Cost
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="mt-1 w-full bg-black/30 border border-white/10 rounded px-3 py-2 text-white"
-                    value={form.cost}
-                    onChange={(e) =>
-                      setForm({ ...form, cost: Number(e.target.value) })
-                    }
-                  />
-                </label>
+
               </div>
               <div className="text-sm text-white/70">
                 Logo
@@ -703,7 +630,7 @@ export default function IPTVPage() {
                   {form.logo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={form.logo}
+                      src={logo.logourl !== "" ? logo.logourl : form.logo}
                       alt={form.name}
                       className="h-10 w-10 rounded bg-white/10 object-contain"
                     />
@@ -720,7 +647,7 @@ export default function IPTVPage() {
                       className="hidden"
                       onChange={(e) => {
                         const f = e.target.files?.[0];
-                        if (f) replaceLogo(f);
+                        if (f) setLogo({ logofile: f, logourl: URL.createObjectURL(f) });
                       }}
                     />
                   </label>
